@@ -1,0 +1,2229 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body><div id="splash" style="position:fixed;inset:0;z-index:100;background:#070a13"><div><svg width="96" height="96" viewBox="-50 -50 100 100" aria-hidden="true"><circle r="44" fill="none" stroke="#5eead4" stroke-opacity=".6" stroke-width="2"/><circle r="28" fill="none" stroke="#a78bfa" stroke-opacity=".6" stroke-width="2"/><circle r="12" fill="none" stroke="#f472b6" stroke-opacity=".7" stroke-width="2"/><circle r="4" fill="#5eead4"/><g><path d="M0 0L44 0A44 44 0 0 0 36 -25Z" fill="#5eead4" opacity=".3"/><line x2="44" stroke="#5eead4" stroke-width="2"/><animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="2.4s" repeatCount="indefinite"/></g></svg><h1>Health Radar</h1><p>Know what is normal for you</p></div></div><script>(function(){var s=document.getElementById('splash');if(!s)return;var seen=0;try{seen=sessionStorage.getItem('hr-splash')}catch(e){}if(seen){s.remove();return}try{sessionStorage.setItem('hr-splash','1')}catch(e){}var go=function(){s.style.opacity=0;setTimeout(function(){s.remove()},600)};setTimeout(go,1800);s.onclick=go})();</script><script>(function(){var t='dark';try{t=localStorage.getItem('hr-theme')||'dark'}catch(e){}document.documentElement.setAttribute('data-theme',t);addEventListener('DOMContentLoaded',function(){var b=document.createElement('button');b.setAttribute('aria-label','Toggle dark mode');b.textContent='\u25D0';b.style.cssText='position:fixed;right:10px;top:calc(8px + env(safe-area-inset-top,0px));z-index:9;width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--fg);font-size:16px;cursor:pointer;opacity:.85';b.onclick=function(){var n=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';document.documentElement.setAttribute('data-theme',n);try{localStorage.setItem('hr-theme',n)}catch(e){}};document.body.appendChild(b)})})();</script>
+<title>Health Radar</title>
+<style>
+:root{--bg:#eaf4f3;--card:#fff;--fg:#14302c;--mut:#5f7a76;--line:#d9e9e6;--blue:#12a58f;--green:#4cc9a0;--red:#ef5d6c;--yel:#f5b83d;--track:#d8ebe8;--ink:#fff}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1a19;--card:#162524;--fg:#e4f3f0;--mut:#8fb0aa;--line:#26403d;--blue:#4fd1b8;--green:#7fe3c3;--red:#ff8a96;--yel:#f7cf6b;--track:#26403d;--ink:#0e1a19;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0e1a19;--card:#162524;--fg:#e4f3f0;--mut:#8fb0aa;--line:#26403d;--blue:#4fd1b8;--green:#7fe3c3;--red:#ff8a96;--yel:#f7cf6b;--track:#26403d;--ink:#0e1a19;color-scheme:dark}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;color:var(--fg);font:15px/1.4 "Google Sans",Roboto,system-ui,-apple-system,sans-serif;
+ background:radial-gradient(900px 420px at 50% -8%,color-mix(in srgb,var(--blue) 18%,transparent),transparent),var(--bg);background-attachment:fixed;min-height:100vh}
+#app{max-width:480px;margin:0 auto;padding:calc(16px + env(safe-area-inset-top,0px)) 14px calc(92px + env(safe-area-inset-bottom,0px))}
+@media(min-width:900px){#app{max-width:1000px}}
+.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.top h1{font-size:25px;letter-spacing:-.4px;margin:0;font-weight:500}
+.sub{color:var(--mut);font-size:13px}
+.av{width:38px;height:38px;border-radius:50%;background:var(--blue);color:var(--ink);display:grid;place-items:center;font-weight:600;box-shadow:0 3px 10px color-mix(in srgb,var(--blue) 45%,transparent)}
+.card{background:var(--card);border:1px solid color-mix(in srgb,var(--line) 70%,transparent);border-radius:22px;padding:16px;margin-bottom:12px;box-shadow:0 1px 2px rgba(0,0,0,.04),0 10px 28px rgba(18,165,143,.08)}
+.card h2{font-size:14px;font-weight:500;margin:0 0 10px;color:var(--mut)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.grid .card{margin:0;cursor:pointer;transition:transform .15s,box-shadow .2s}
+.grid .card:active{transform:scale(.98)}
+.big{font-size:26px;font-weight:500;letter-spacing:-.6px}
+.big small{font-size:13px;color:var(--mut);font-weight:400}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px}
+.row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);cursor:pointer}
+.row:last-child{border:0}.grow{flex:1;min-width:0}
+nav{position:fixed;left:0;right:0;bottom:0;z-index:10;background:color-mix(in srgb,var(--card) 82%,transparent);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-top:1px solid var(--line);display:flex;justify-content:center;padding-bottom:env(safe-area-inset-bottom,0px)}
+nav>div{max-width:480px;width:100%;display:flex}
+nav button{flex:1;background:none;border:0;color:var(--mut);padding:10px 0 8px;font:inherit;font-size:12px;cursor:pointer}
+nav button.on{color:var(--blue);font-weight:600}
+nav svg{display:block;margin:0 auto 2px;width:24px;height:24px;fill:currentColor}
+button.p{background:var(--blue);color:var(--ink);border:0;border-radius:99px;padding:10px 20px;font:inherit;font-weight:500;cursor:pointer;box-shadow:0 3px 10px color-mix(in srgb,var(--blue) 30%,transparent);transition:transform .1s,filter .15s}
+button.p:hover{filter:brightness(1.07)}button.p:active{transform:scale(.96)}button.p:disabled{opacity:.5;cursor:not-allowed}
+button.p.o{background:none;color:var(--blue);border:1px solid var(--line);box-shadow:none}
+button.p.r{background:var(--red);color:#fff}
+button.p.sm{padding:6px 14px}
+button.p.wide{width:100%}
+.acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+input,select{font:inherit;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--fg);width:100%;min-width:0}
+input:focus,select:focus,button:focus-visible{outline:2px solid color-mix(in srgb,var(--blue) 55%,transparent);outline-offset:1px;border-color:transparent}
+label.sub{display:block;margin-bottom:3px}
+.f{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end}.f2{display:flex;gap:8px}
+.fld{margin-bottom:10px}
+.back{background:none;border:0;color:var(--blue);font:inherit;cursor:pointer;padding:0 0 10px}
+.tip{background:linear-gradient(135deg,color-mix(in srgb,var(--blue) 16%,var(--card)),color-mix(in srgb,var(--green) 10%,var(--card)))}
+.hero{background:linear-gradient(160deg,color-mix(in srgb,var(--blue) 14%,var(--card)),var(--card))}
+.cols{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));align-items:start;margin-bottom:12px}
+.cols>*{min-width:0}.cols .card{margin-bottom:12px}
+.narrow{max-width:420px;margin:0 auto}
+.chips{display:flex;gap:8px;margin-top:12px}
+.chip{flex:1;background:var(--bg);border-radius:14px;padding:8px;text-align:center;font-size:12px;color:var(--mut)}
+.chip b{display:block;font-size:17px;color:var(--fg);font-weight:600}
+.tag{display:inline-block;padding:2px 10px;border-radius:99px;font-size:12px;font-weight:600}
+.pbar{height:10px;border-radius:99px;background:var(--track);overflow:hidden;margin-top:6px}
+.pbar i{display:block;height:100%;border-radius:99px;transition:width .6s}
+.seg{display:flex;background:var(--track);border-radius:99px;padding:3px}
+.seg button{margin:0;border:0;background:none;padding:5px 12px;border-radius:99px;color:var(--mut);cursor:pointer;font:inherit;font-size:13px}
+.seg button.on{background:var(--card);color:var(--fg);box-shadow:0 1px 4px rgba(0,0,0,.12)}
+pre{white-space:pre-wrap;word-break:break-word;font:12px/1.5 ui-monospace,Menlo,Consolas,monospace;background:var(--bg);padding:10px;border-radius:12px;max-height:260px;overflow:auto;margin:0 0 8px}
+.err{color:var(--red);min-height:22px}
+.warn{color:var(--red)}
+circle{transition:stroke-dasharray .9s cubic-bezier(.2,.8,.2,1)}
+#app>*{animation:rise .35s ease both}@keyframes rise{from{opacity:0;transform:translateY(8px)}}
+.rbn{position:fixed;left:10px;right:10px;top:calc(10px + env(safe-area-inset-top,0px));z-index:40;background:var(--red);color:#fff;border-radius:16px;padding:14px 16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;box-shadow:0 8px 28px rgba(239,93,108,.5);animation:glow 1s infinite}
+.rbn>div{flex:1;min-width:200px}.rbn button.p{background:#fff;color:#c0293a}
+@keyframes glow{50%{box-shadow:0 0 0 7px rgba(239,93,108,.3)}}
+#toast{position:fixed;left:50%;bottom:calc(86px + env(safe-area-inset-bottom,0px));transform:translateX(-50%) translateY(20px);background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:99px;font-size:14px;opacity:0;pointer-events:none;transition:.25s;z-index:60;max-width:90vw;text-align:center}
+#toast.on{opacity:1;transform:translateX(-50%)}
+.ovl{position:fixed;inset:0;z-index:20;background:var(--bg);color:var(--fg);padding:calc(20px + env(safe-area-inset-top,0px)) 18px;overflow:auto}
+.ovl>div{max-width:480px;margin:0 auto}
+.qr{background:#fff;color:#000;text-align:center;border-radius:16px;padding:12px}
+.qr svg{max-width:240px;width:100%;height:auto}
+.ck{display:flex;gap:8px;align-items:flex-start;padding:6px 0}
+.ck b{width:18px;flex:none}
+.disc{font-size:12px;color:var(--mut);margin-top:10px}
+.simbar{margin:2px 0 10px;padding:8px 10px;border-radius:12px;font-size:12px;font-weight:600;background:color-mix(in srgb,var(--yel) 20%,var(--card));border:1px dashed var(--yel);color:var(--fg)}
+.simbar.live{background:color-mix(in srgb,var(--green) 18%,var(--card));border-color:var(--green)}
+.pf{border:1px solid var(--line);border-radius:16px;padding:10px;margin-top:10px;background:var(--card)}
+.pf svg{display:block;width:100%;height:84px;background:var(--bg);border-radius:10px}
+.vt{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}.vt td{padding:6px 4px;border-bottom:1px solid var(--line);vertical-align:top}.vt td:last-child{text-align:right;white-space:nowrap}
+.ev b.g{color:var(--green)}.ev b.y{color:var(--yel)}.ev b.r{color:var(--red)}.ev ul{margin:4px 0 10px;padding-left:18px}.ev li{margin:3px 0;font-size:13px}
+/* ===== Aurora glass redesign (visual only, features unchanged) ===== */
+:root[data-theme="dark"]{--bg:#070a13;--card:rgba(255,255,255,.06);--fg:#eaf0ff;--mut:#9aa7c7;--line:rgba(255,255,255,.11);--blue:#5eead4;--green:#86efac;--red:#fb7185;--yel:#fcd34d;--track:rgba(255,255,255,.1);--ink:#06121a;--vio:#a78bfa;--pink:#f472b6;--navbg:rgba(16,22,40,.72);--a1:.24;--a2:.22;--a3:.14;color-scheme:dark}
+:root[data-theme="light"]{--bg:#eef2ff;--card:rgba(255,255,255,.72);--fg:#121a33;--mut:#5d6a8c;--line:rgba(18,26,51,.1);--blue:#0d9488;--green:#16a34a;--red:#e11d48;--yel:#d97706;--track:rgba(18,26,51,.1);--ink:#fff;--vio:#7c3aed;--pink:#db2777;--navbg:rgba(255,255,255,.78);--a1:.16;--a2:.14;--a3:.1;color-scheme:light}
+body{background:radial-gradient(620px 420px at 8% -6%,rgba(45,212,191,var(--a1,.2)),transparent 62%),radial-gradient(520px 400px at 98% 2%,rgba(139,92,246,var(--a2,.2)),transparent 62%),radial-gradient(560px 420px at 50% 112%,rgba(244,114,182,var(--a3,.12)),transparent 62%),var(--bg);background-attachment:fixed}
+#app{padding-bottom:calc(112px + env(safe-area-inset-bottom,0px))}
+.card{backdrop-filter:blur(16px) saturate(150%);-webkit-backdrop-filter:blur(16px) saturate(150%);border:1px solid var(--line);border-radius:26px;box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 18px 40px -22px rgba(0,0,0,.55)}
+.card h2{text-transform:uppercase;letter-spacing:1.6px;font-size:11px;font-weight:600}
+.hero{background:linear-gradient(150deg,color-mix(in srgb,var(--blue) 22%,transparent),color-mix(in srgb,var(--vio) 16%,transparent) 62%,color-mix(in srgb,var(--pink) 12%,transparent))}
+.hero svg{filter:drop-shadow(0 0 12px color-mix(in srgb,var(--blue) 40%,transparent))}
+.grid .card{position:relative;overflow:hidden}.grid .card::after{content:"";position:absolute;right:-26px;top:-26px;width:90px;height:90px;border-radius:50%;background:radial-gradient(circle,var(--blue),transparent 70%);opacity:.2;pointer-events:none}
+.grid .card:nth-child(2)::after{background:radial-gradient(circle,var(--red),transparent 70%)}.grid .card:nth-child(3)::after{background:radial-gradient(circle,var(--vio),transparent 70%)}.grid .card:nth-child(4)::after{background:radial-gradient(circle,var(--pink),transparent 70%)}
+.top h1{font-size:27px;font-weight:700;letter-spacing:-.6px;background:linear-gradient(90deg,var(--fg) 30%,var(--blue));-webkit-background-clip:text;background-clip:text;color:transparent}
+.big{font-size:31px;font-weight:700;letter-spacing:-1px}
+.av{background:linear-gradient(135deg,var(--blue),var(--vio));box-shadow:0 8px 22px -4px color-mix(in srgb,var(--vio) 60%,transparent)}
+button.p{background:linear-gradient(135deg,var(--blue),var(--vio));color:var(--ink);box-shadow:0 10px 24px -8px color-mix(in srgb,var(--blue) 60%,transparent)}
+button.p.r{background:linear-gradient(135deg,var(--red),var(--pink));color:#fff}
+button.p.o{background:transparent;color:var(--blue);border:1px solid var(--line);box-shadow:none}
+.pbar i{background-image:linear-gradient(90deg,var(--blue),var(--vio))!important}
+.chip{background:color-mix(in srgb,var(--fg) 6%,transparent);border:1px solid var(--line)}
+input,select{background:color-mix(in srgb,var(--fg) 5%,transparent);border-radius:14px}
+nav{left:12px;right:12px;bottom:calc(10px + env(safe-area-inset-bottom,0px));padding-bottom:0;border:1px solid var(--line);border-radius:28px;background:var(--navbg);backdrop-filter:blur(20px) saturate(160%);-webkit-backdrop-filter:blur(20px) saturate(160%);box-shadow:0 16px 44px rgba(0,0,0,.4)}
+nav button.on svg{filter:drop-shadow(0 0 8px var(--blue))}
+.rstat{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 14px;margin-bottom:12px;border-radius:99px;background:var(--card);border:1px solid var(--line);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);cursor:pointer}
+.pdot{width:10px;height:10px;border-radius:50%;animation:pd 1.6s infinite}@keyframes pd{50%{box-shadow:0 0 0 7px transparent;opacity:.5}}
+@media(prefers-reduced-motion:reduce){.pdot,#app>*{animation:none}}
+/* ===== Splash, spacing clean-up, daily-health cards ===== */
+.mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+.cols{gap:14px}.grid{gap:14px}.top{margin-bottom:16px;gap:10px}.top h1{line-height:1.15}
+.card h2{margin-bottom:12px}.sub{line-height:1.45}.disc{line-height:1.5}.acts{gap:10px}
+.card,.row,.chip,.sub{overflow-wrap:anywhere}
+button.p{min-height:44px}button.p.sm{min-height:38px;padding:8px 16px}
+input,select{font-size:16px;min-height:46px}
+nav button{letter-spacing:.2px}
+.qk{display:flex;gap:8px;margin:12px 0}.qk button{flex:1}
+#splash{display:grid;place-items:center;text-align:center;transition:opacity .6s;background:radial-gradient(520px 380px at 20% 10%,rgba(45,212,191,.25),transparent 60%),radial-gradient(520px 380px at 85% 90%,rgba(139,92,246,.25),transparent 60%),#070a13;color:#eaf0ff}
+#splash h1{margin:14px 0 4px;font-size:30px;letter-spacing:-.5px;background:linear-gradient(90deg,#eaf0ff,#5eead4);-webkit-background-clip:text;background-clip:text;color:transparent}
+#splash p{margin:0;color:#9aa7c7}
+#slp{position:fixed;inset:0;z-index:30;background:#02040a;color:#c8d3f0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;text-align:center;padding:24px}
+#slp .mono{font-size:64px;font-weight:300;letter-spacing:2px}#slp .sub{color:#7e8bb0}
+#slp button.p{background:#1a2240;color:#c8d3f0;box-shadow:none;border:1px solid #2a3560}
+
+
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+</style>
+<div id="app"></div><div id="toast" role="status" aria-live="polite"></div><nav aria-label="Main"><div id="nav"></div></nav>
+<script>
+/* QR code generator (c) 2009 Kazuhiko Arase, MIT license (http://www.d-project.com/). 'QR Code' is a registered trademark of DENSO WAVE INCORPORATED.
+   Bundled for the browser from the copy shipped with qrcode-terminal. Exposes window.QRCode. */
+(function(){var M={},C={};function req(p){var n=p.replace('./','');if(C[n])return C[n].exports;var m=C[n]={exports:{}};M[n](m,m.exports,req);return m.exports}
+M['QRMode']=function(module,exports,require){
+module.exports = {
+    MODE_NUMBER :       1 << 0,
+    MODE_ALPHA_NUM :    1 << 1,
+    MODE_8BIT_BYTE :    1 << 2,
+    MODE_KANJI :        1 << 3
+};
+
+};
+M['QRMath']=function(module,exports,require){
+var QRMath = {
+
+	glog : function(n) {
+	
+		if (n < 1) {
+			throw new Error("glog(" + n + ")");
+		}
+		
+		return QRMath.LOG_TABLE[n];
+	},
+	
+	gexp : function(n) {
+	
+		while (n < 0) {
+			n += 255;
+		}
+	
+		while (n >= 256) {
+			n -= 255;
+		}
+	
+		return QRMath.EXP_TABLE[n];
+	},
+	
+	EXP_TABLE : new Array(256),
+	
+	LOG_TABLE : new Array(256)
+
+};
+	
+for (var i = 0; i < 8; i++) {
+	QRMath.EXP_TABLE[i] = 1 << i;
+}
+for (var i = 8; i < 256; i++) {
+	QRMath.EXP_TABLE[i] = QRMath.EXP_TABLE[i - 4]
+		^ QRMath.EXP_TABLE[i - 5]
+		^ QRMath.EXP_TABLE[i - 6]
+		^ QRMath.EXP_TABLE[i - 8];
+}
+for (var i = 0; i < 255; i++) {
+	QRMath.LOG_TABLE[QRMath.EXP_TABLE[i] ] = i;
+}
+
+module.exports = QRMath;
+
+};
+M['QRPolynomial']=function(module,exports,require){
+var QRMath = require('./QRMath');
+
+function QRPolynomial(num, shift) {
+	if (num.length === undefined) {
+		throw new Error(num.length + "/" + shift);
+	}
+
+	var offset = 0;
+
+	while (offset < num.length && num[offset] === 0) {
+		offset++;
+	}
+
+	this.num = new Array(num.length - offset + shift);
+	for (var i = 0; i < num.length - offset; i++) {
+		this.num[i] = num[i + offset];
+	}
+}
+
+QRPolynomial.prototype = {
+
+	get : function(index) {
+		return this.num[index];
+	},
+	
+	getLength : function() {
+		return this.num.length;
+	},
+	
+	multiply : function(e) {
+	
+		var num = new Array(this.getLength() + e.getLength() - 1);
+	
+		for (var i = 0; i < this.getLength(); i++) {
+			for (var j = 0; j < e.getLength(); j++) {
+				num[i + j] ^= QRMath.gexp(QRMath.glog(this.get(i) ) + QRMath.glog(e.get(j) ) );
+			}
+		}
+	
+		return new QRPolynomial(num, 0);
+	},
+	
+	mod : function(e) {
+	
+		if (this.getLength() - e.getLength() < 0) {
+			return this;
+		}
+	
+		var ratio = QRMath.glog(this.get(0) ) - QRMath.glog(e.get(0) );
+	
+		var num = new Array(this.getLength() );
+		
+		for (var i = 0; i < this.getLength(); i++) {
+			num[i] = this.get(i);
+		}
+		
+		for (var x = 0; x < e.getLength(); x++) {
+			num[x] ^= QRMath.gexp(QRMath.glog(e.get(x) ) + ratio);
+		}
+	
+		// recursive call
+		return new QRPolynomial(num, 0).mod(e);
+	}
+};
+
+module.exports = QRPolynomial;
+
+};
+M['QRMaskPattern']=function(module,exports,require){
+module.exports = {
+	PATTERN000 : 0,
+	PATTERN001 : 1,
+	PATTERN010 : 2,
+	PATTERN011 : 3,
+	PATTERN100 : 4,
+	PATTERN101 : 5,
+	PATTERN110 : 6,
+	PATTERN111 : 7
+};
+
+};
+M['QRErrorCorrectLevel']=function(module,exports,require){
+module.exports = {
+	L : 1,
+	M : 0,
+	Q : 3,
+	H : 2
+};
+
+
+};
+M['QRRSBlock']=function(module,exports,require){
+var QRErrorCorrectLevel = require('./QRErrorCorrectLevel');
+
+function QRRSBlock(totalCount, dataCount) {
+	this.totalCount = totalCount;
+	this.dataCount  = dataCount;
+}
+
+QRRSBlock.RS_BLOCK_TABLE = [
+
+	// L
+	// M
+	// Q
+	// H
+
+	// 1
+	[1, 26, 19],
+	[1, 26, 16],
+	[1, 26, 13],
+	[1, 26, 9],
+	
+	// 2
+	[1, 44, 34],
+	[1, 44, 28],
+	[1, 44, 22],
+	[1, 44, 16],
+
+	// 3
+	[1, 70, 55],
+	[1, 70, 44],
+	[2, 35, 17],
+	[2, 35, 13],
+
+	// 4		
+	[1, 100, 80],
+	[2, 50, 32],
+	[2, 50, 24],
+	[4, 25, 9],
+	
+	// 5
+	[1, 134, 108],
+	[2, 67, 43],
+	[2, 33, 15, 2, 34, 16],
+	[2, 33, 11, 2, 34, 12],
+	
+	// 6
+	[2, 86, 68],
+	[4, 43, 27],
+	[4, 43, 19],
+	[4, 43, 15],
+	
+	// 7		
+	[2, 98, 78],
+	[4, 49, 31],
+	[2, 32, 14, 4, 33, 15],
+	[4, 39, 13, 1, 40, 14],
+	
+	// 8
+	[2, 121, 97],
+	[2, 60, 38, 2, 61, 39],
+	[4, 40, 18, 2, 41, 19],
+	[4, 40, 14, 2, 41, 15],
+	
+	// 9
+	[2, 146, 116],
+	[3, 58, 36, 2, 59, 37],
+	[4, 36, 16, 4, 37, 17],
+	[4, 36, 12, 4, 37, 13],
+	
+	// 10		
+	[2, 86, 68, 2, 87, 69],
+	[4, 69, 43, 1, 70, 44],
+	[6, 43, 19, 2, 44, 20],
+	[6, 43, 15, 2, 44, 16],
+
+	// 11
+	[4, 101, 81],
+	[1, 80, 50, 4, 81, 51],
+	[4, 50, 22, 4, 51, 23],
+	[3, 36, 12, 8, 37, 13],
+
+	// 12
+	[2, 116, 92, 2, 117, 93],
+	[6, 58, 36, 2, 59, 37],
+	[4, 46, 20, 6, 47, 21],
+	[7, 42, 14, 4, 43, 15],
+
+	// 13
+	[4, 133, 107],
+	[8, 59, 37, 1, 60, 38],
+	[8, 44, 20, 4, 45, 21],
+	[12, 33, 11, 4, 34, 12],
+
+	// 14
+	[3, 145, 115, 1, 146, 116],
+	[4, 64, 40, 5, 65, 41],
+	[11, 36, 16, 5, 37, 17],
+	[11, 36, 12, 5, 37, 13],
+
+	// 15
+	[5, 109, 87, 1, 110, 88],
+	[5, 65, 41, 5, 66, 42],
+	[5, 54, 24, 7, 55, 25],
+	[11, 36, 12],
+
+	// 16
+	[5, 122, 98, 1, 123, 99],
+	[7, 73, 45, 3, 74, 46],
+	[15, 43, 19, 2, 44, 20],
+	[3, 45, 15, 13, 46, 16],
+
+	// 17
+	[1, 135, 107, 5, 136, 108],
+	[10, 74, 46, 1, 75, 47],
+	[1, 50, 22, 15, 51, 23],
+	[2, 42, 14, 17, 43, 15],
+
+	// 18
+	[5, 150, 120, 1, 151, 121],
+	[9, 69, 43, 4, 70, 44],
+	[17, 50, 22, 1, 51, 23],
+	[2, 42, 14, 19, 43, 15],
+
+	// 19
+	[3, 141, 113, 4, 142, 114],
+	[3, 70, 44, 11, 71, 45],
+	[17, 47, 21, 4, 48, 22],
+	[9, 39, 13, 16, 40, 14],
+
+	// 20
+	[3, 135, 107, 5, 136, 108],
+	[3, 67, 41, 13, 68, 42],
+	[15, 54, 24, 5, 55, 25],
+	[15, 43, 15, 10, 44, 16],
+
+	// 21
+	[4, 144, 116, 4, 145, 117],
+	[17, 68, 42],
+	[17, 50, 22, 6, 51, 23],
+	[19, 46, 16, 6, 47, 17],
+
+	// 22
+	[2, 139, 111, 7, 140, 112],
+	[17, 74, 46],
+	[7, 54, 24, 16, 55, 25],
+	[34, 37, 13],
+
+	// 23
+	[4, 151, 121, 5, 152, 122],
+	[4, 75, 47, 14, 76, 48],
+	[11, 54, 24, 14, 55, 25],
+	[16, 45, 15, 14, 46, 16],
+
+	// 24
+	[6, 147, 117, 4, 148, 118],
+	[6, 73, 45, 14, 74, 46],
+	[11, 54, 24, 16, 55, 25],
+	[30, 46, 16, 2, 47, 17],
+
+	// 25
+	[8, 132, 106, 4, 133, 107],
+	[8, 75, 47, 13, 76, 48],
+	[7, 54, 24, 22, 55, 25],
+	[22, 45, 15, 13, 46, 16],
+
+	// 26
+	[10, 142, 114, 2, 143, 115],
+	[19, 74, 46, 4, 75, 47],
+	[28, 50, 22, 6, 51, 23],
+	[33, 46, 16, 4, 47, 17],
+
+	// 27
+	[8, 152, 122, 4, 153, 123],
+	[22, 73, 45, 3, 74, 46],
+	[8, 53, 23, 26, 54, 24],
+	[12, 45, 15, 28, 46, 16],
+
+	// 28
+	[3, 147, 117, 10, 148, 118],
+	[3, 73, 45, 23, 74, 46],
+	[4, 54, 24, 31, 55, 25],
+	[11, 45, 15, 31, 46, 16],
+
+	// 29
+	[7, 146, 116, 7, 147, 117],
+	[21, 73, 45, 7, 74, 46],
+	[1, 53, 23, 37, 54, 24],
+	[19, 45, 15, 26, 46, 16],
+
+	// 30
+	[5, 145, 115, 10, 146, 116],
+	[19, 75, 47, 10, 76, 48],
+	[15, 54, 24, 25, 55, 25],
+	[23, 45, 15, 25, 46, 16],
+
+	// 31
+	[13, 145, 115, 3, 146, 116],
+	[2, 74, 46, 29, 75, 47],
+	[42, 54, 24, 1, 55, 25],
+	[23, 45, 15, 28, 46, 16],
+
+	// 32
+	[17, 145, 115],
+	[10, 74, 46, 23, 75, 47],
+	[10, 54, 24, 35, 55, 25],
+	[19, 45, 15, 35, 46, 16],
+
+	// 33
+	[17, 145, 115, 1, 146, 116],
+	[14, 74, 46, 21, 75, 47],
+	[29, 54, 24, 19, 55, 25],
+	[11, 45, 15, 46, 46, 16],
+
+	// 34
+	[13, 145, 115, 6, 146, 116],
+	[14, 74, 46, 23, 75, 47],
+	[44, 54, 24, 7, 55, 25],
+	[59, 46, 16, 1, 47, 17],
+
+	// 35
+	[12, 151, 121, 7, 152, 122],
+	[12, 75, 47, 26, 76, 48],
+	[39, 54, 24, 14, 55, 25],
+	[22, 45, 15, 41, 46, 16],
+
+	// 36
+	[6, 151, 121, 14, 152, 122],
+	[6, 75, 47, 34, 76, 48],
+	[46, 54, 24, 10, 55, 25],
+	[2, 45, 15, 64, 46, 16],
+
+	// 37
+	[17, 152, 122, 4, 153, 123],
+	[29, 74, 46, 14, 75, 47],
+	[49, 54, 24, 10, 55, 25],
+	[24, 45, 15, 46, 46, 16],
+
+	// 38
+	[4, 152, 122, 18, 153, 123],
+	[13, 74, 46, 32, 75, 47],
+	[48, 54, 24, 14, 55, 25],
+	[42, 45, 15, 32, 46, 16],
+
+	// 39
+	[20, 147, 117, 4, 148, 118],
+	[40, 75, 47, 7, 76, 48],
+	[43, 54, 24, 22, 55, 25],
+	[10, 45, 15, 67, 46, 16],
+
+	// 40
+	[19, 148, 118, 6, 149, 119],
+	[18, 75, 47, 31, 76, 48],
+	[34, 54, 24, 34, 55, 25],
+	[20, 45, 15, 61, 46, 16]
+];
+
+QRRSBlock.getRSBlocks = function(typeNumber, errorCorrectLevel) {
+	
+	var rsBlock = QRRSBlock.getRsBlockTable(typeNumber, errorCorrectLevel);
+	
+	if (rsBlock === undefined) {
+		throw new Error("bad rs block @ typeNumber:" + typeNumber + "/errorCorrectLevel:" + errorCorrectLevel);
+	}
+
+	var length = rsBlock.length / 3;
+	
+	var list = [];
+	
+	for (var i = 0; i < length; i++) {
+
+		var count = rsBlock[i * 3 + 0];
+		var totalCount = rsBlock[i * 3 + 1];
+		var dataCount  = rsBlock[i * 3 + 2];
+
+		for (var j = 0; j < count; j++) {
+			list.push(new QRRSBlock(totalCount, dataCount) );	
+		}
+	}
+	
+	return list;
+};
+
+QRRSBlock.getRsBlockTable = function(typeNumber, errorCorrectLevel) {
+
+	switch(errorCorrectLevel) {
+	case QRErrorCorrectLevel.L :
+		return QRRSBlock.RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 0];
+	case QRErrorCorrectLevel.M :
+		return QRRSBlock.RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 1];
+	case QRErrorCorrectLevel.Q :
+		return QRRSBlock.RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 2];
+	case QRErrorCorrectLevel.H :
+		return QRRSBlock.RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 3];
+	default :
+		return undefined;
+	}
+};
+
+module.exports = QRRSBlock;
+
+};
+M['QR8bitByte']=function(module,exports,require){
+var QRMode = require('./QRMode');
+
+function QR8bitByte(data) {
+	this.mode = QRMode.MODE_8BIT_BYTE;
+	this.data = data;
+}
+
+QR8bitByte.prototype = {
+
+	getLength : function() {
+		return this.data.length;
+	},
+	
+	write : function(buffer) {
+		for (var i = 0; i < this.data.length; i++) {
+			// not JIS ...
+			buffer.put(this.data.charCodeAt(i), 8);
+		}
+	}
+};
+
+module.exports = QR8bitByte;
+
+};
+M['QRBitBuffer']=function(module,exports,require){
+function QRBitBuffer() {
+	this.buffer = [];
+	this.length = 0;
+}
+
+QRBitBuffer.prototype = {
+
+	get : function(index) {
+		var bufIndex = Math.floor(index / 8);
+		return ( (this.buffer[bufIndex] >>> (7 - index % 8) ) & 1) == 1;
+	},
+	
+	put : function(num, length) {
+		for (var i = 0; i < length; i++) {
+			this.putBit( ( (num >>> (length - i - 1) ) & 1) == 1);
+		}
+	},
+	
+	getLengthInBits : function() {
+		return this.length;
+	},
+	
+	putBit : function(bit) {
+	
+		var bufIndex = Math.floor(this.length / 8);
+		if (this.buffer.length <= bufIndex) {
+			this.buffer.push(0);
+		}
+	
+		if (bit) {
+			this.buffer[bufIndex] |= (0x80 >>> (this.length % 8) );
+		}
+	
+		this.length++;
+	}
+};
+
+module.exports = QRBitBuffer;
+
+};
+M['QRUtil']=function(module,exports,require){
+var QRMode = require('./QRMode');
+var QRPolynomial = require('./QRPolynomial');
+var QRMath = require('./QRMath');
+var QRMaskPattern = require('./QRMaskPattern');
+
+var QRUtil = {
+
+    PATTERN_POSITION_TABLE : [
+        [],
+        [6, 18],
+        [6, 22],
+        [6, 26],
+        [6, 30],
+        [6, 34],
+        [6, 22, 38],
+        [6, 24, 42],
+        [6, 26, 46],
+        [6, 28, 50],
+        [6, 30, 54],        
+        [6, 32, 58],
+        [6, 34, 62],
+        [6, 26, 46, 66],
+        [6, 26, 48, 70],
+        [6, 26, 50, 74],
+        [6, 30, 54, 78],
+        [6, 30, 56, 82],
+        [6, 30, 58, 86],
+        [6, 34, 62, 90],
+        [6, 28, 50, 72, 94],
+        [6, 26, 50, 74, 98],
+        [6, 30, 54, 78, 102],
+        [6, 28, 54, 80, 106],
+        [6, 32, 58, 84, 110],
+        [6, 30, 58, 86, 114],
+        [6, 34, 62, 90, 118],
+        [6, 26, 50, 74, 98, 122],
+        [6, 30, 54, 78, 102, 126],
+        [6, 26, 52, 78, 104, 130],
+        [6, 30, 56, 82, 108, 134],
+        [6, 34, 60, 86, 112, 138],
+        [6, 30, 58, 86, 114, 142],
+        [6, 34, 62, 90, 118, 146],
+        [6, 30, 54, 78, 102, 126, 150],
+        [6, 24, 50, 76, 102, 128, 154],
+        [6, 28, 54, 80, 106, 132, 158],
+        [6, 32, 58, 84, 110, 136, 162],
+        [6, 26, 54, 82, 110, 138, 166],
+        [6, 30, 58, 86, 114, 142, 170]
+    ],
+
+    G15 : (1 << 10) | (1 << 8) | (1 << 5) | (1 << 4) | (1 << 2) | (1 << 1) | (1 << 0),
+    G18 : (1 << 12) | (1 << 11) | (1 << 10) | (1 << 9) | (1 << 8) | (1 << 5) | (1 << 2) | (1 << 0),
+    G15_MASK : (1 << 14) | (1 << 12) | (1 << 10)    | (1 << 4) | (1 << 1),
+
+    getBCHTypeInfo : function(data) {
+        var d = data << 10;
+        while (QRUtil.getBCHDigit(d) - QRUtil.getBCHDigit(QRUtil.G15) >= 0) {
+            d ^= (QRUtil.G15 << (QRUtil.getBCHDigit(d) - QRUtil.getBCHDigit(QRUtil.G15) ) );    
+        }
+        return ( (data << 10) | d) ^ QRUtil.G15_MASK;
+    },
+
+    getBCHTypeNumber : function(data) {
+        var d = data << 12;
+        while (QRUtil.getBCHDigit(d) - QRUtil.getBCHDigit(QRUtil.G18) >= 0) {
+            d ^= (QRUtil.G18 << (QRUtil.getBCHDigit(d) - QRUtil.getBCHDigit(QRUtil.G18) ) );    
+        }
+        return (data << 12) | d;
+    },
+
+    getBCHDigit : function(data) {
+
+        var digit = 0;
+
+        while (data !== 0) {
+            digit++;
+            data >>>= 1;
+        }
+
+        return digit;
+    },
+
+    getPatternPosition : function(typeNumber) {
+        return QRUtil.PATTERN_POSITION_TABLE[typeNumber - 1];
+    },
+
+    getMask : function(maskPattern, i, j) {
+        
+        switch (maskPattern) {
+            
+        case QRMaskPattern.PATTERN000 : return (i + j) % 2 === 0;
+        case QRMaskPattern.PATTERN001 : return i % 2 === 0;
+        case QRMaskPattern.PATTERN010 : return j % 3 === 0;
+        case QRMaskPattern.PATTERN011 : return (i + j) % 3 === 0;
+        case QRMaskPattern.PATTERN100 : return (Math.floor(i / 2) + Math.floor(j / 3) ) % 2 === 0;
+        case QRMaskPattern.PATTERN101 : return (i * j) % 2 + (i * j) % 3 === 0;
+        case QRMaskPattern.PATTERN110 : return ( (i * j) % 2 + (i * j) % 3) % 2 === 0;
+        case QRMaskPattern.PATTERN111 : return ( (i * j) % 3 + (i + j) % 2) % 2 === 0;
+
+        default :
+            throw new Error("bad maskPattern:" + maskPattern);
+        }
+    },
+
+    getErrorCorrectPolynomial : function(errorCorrectLength) {
+
+        var a = new QRPolynomial([1], 0);
+
+        for (var i = 0; i < errorCorrectLength; i++) {
+            a = a.multiply(new QRPolynomial([1, QRMath.gexp(i)], 0) );
+        }
+
+        return a;
+    },
+
+    getLengthInBits : function(mode, type) {
+
+        if (1 <= type && type < 10) {
+
+            // 1 - 9
+
+            switch(mode) {
+            case QRMode.MODE_NUMBER     : return 10;
+            case QRMode.MODE_ALPHA_NUM  : return 9;
+            case QRMode.MODE_8BIT_BYTE  : return 8;
+            case QRMode.MODE_KANJI      : return 8;
+            default :
+                throw new Error("mode:" + mode);
+            }
+
+        } else if (type < 27) {
+
+            // 10 - 26
+
+            switch(mode) {
+            case QRMode.MODE_NUMBER     : return 12;
+            case QRMode.MODE_ALPHA_NUM  : return 11;
+            case QRMode.MODE_8BIT_BYTE  : return 16;
+            case QRMode.MODE_KANJI      : return 10;
+            default :
+                throw new Error("mode:" + mode);
+            }
+
+        } else if (type < 41) {
+
+            // 27 - 40
+
+            switch(mode) {
+            case QRMode.MODE_NUMBER     : return 14;
+            case QRMode.MODE_ALPHA_NUM  : return 13;
+            case QRMode.MODE_8BIT_BYTE  : return 16;
+            case QRMode.MODE_KANJI      : return 12;
+            default :
+                throw new Error("mode:" + mode);
+            }
+
+        } else {
+            throw new Error("type:" + type);
+        }
+    },
+
+    getLostPoint : function(qrCode) {
+        
+        var moduleCount = qrCode.getModuleCount();
+        var lostPoint = 0;
+        var row = 0; 
+        var col = 0;
+
+        
+        // LEVEL1
+        
+        for (row = 0; row < moduleCount; row++) {
+
+            for (col = 0; col < moduleCount; col++) {
+
+                var sameCount = 0;
+                var dark = qrCode.isDark(row, col);
+
+                for (var r = -1; r <= 1; r++) {
+
+                    if (row + r < 0 || moduleCount <= row + r) {
+                        continue;
+                    }
+
+                    for (var c = -1; c <= 1; c++) {
+
+                        if (col + c < 0 || moduleCount <= col + c) {
+                            continue;
+                        }
+
+                        if (r === 0 && c === 0) {
+                            continue;
+                        }
+
+                        if (dark === qrCode.isDark(row + r, col + c) ) {
+                            sameCount++;
+                        }
+                    }
+                }
+
+                if (sameCount > 5) {
+                    lostPoint += (3 + sameCount - 5);
+                }
+            }
+        }
+
+        // LEVEL2
+
+        for (row = 0; row < moduleCount - 1; row++) {
+            for (col = 0; col < moduleCount - 1; col++) {
+                var count = 0;
+                if (qrCode.isDark(row,     col    ) ) count++;
+                if (qrCode.isDark(row + 1, col    ) ) count++;
+                if (qrCode.isDark(row,     col + 1) ) count++;
+                if (qrCode.isDark(row + 1, col + 1) ) count++;
+                if (count === 0 || count === 4) {
+                    lostPoint += 3;
+                }
+            }
+        }
+
+        // LEVEL3
+
+        for (row = 0; row < moduleCount; row++) {
+            for (col = 0; col < moduleCount - 6; col++) {
+                if (qrCode.isDark(row, col) && 
+                        !qrCode.isDark(row, col + 1) && 
+                         qrCode.isDark(row, col + 2) && 
+                         qrCode.isDark(row, col + 3) && 
+                         qrCode.isDark(row, col + 4) && 
+                        !qrCode.isDark(row, col + 5) && 
+                         qrCode.isDark(row, col + 6) ) {
+                    lostPoint += 40;
+                }
+            }
+        }
+
+        for (col = 0; col < moduleCount; col++) {
+            for (row = 0; row < moduleCount - 6; row++) {
+                if (qrCode.isDark(row, col) &&
+                        !qrCode.isDark(row + 1, col) &&
+                         qrCode.isDark(row + 2, col) &&
+                         qrCode.isDark(row + 3, col) &&
+                         qrCode.isDark(row + 4, col) &&
+                        !qrCode.isDark(row + 5, col) &&
+                         qrCode.isDark(row + 6, col) ) {
+                    lostPoint += 40;
+                }
+            }
+        }
+
+        // LEVEL4
+        
+        var darkCount = 0;
+
+        for (col = 0; col < moduleCount; col++) {
+            for (row = 0; row < moduleCount; row++) {
+                if (qrCode.isDark(row, col) ) {
+                    darkCount++;
+                }
+            }
+        }
+        
+        var ratio = Math.abs(100 * darkCount / moduleCount / moduleCount - 50) / 5;
+        lostPoint += ratio * 10;
+
+        return lostPoint;       
+    }
+
+};
+
+module.exports = QRUtil;
+
+};
+M['index']=function(module,exports,require){
+//---------------------------------------------------------------------
+// QRCode for JavaScript
+//
+// Copyright (c) 2009 Kazuhiko Arase
+//
+// URL: http://www.d-project.com/
+//
+// Licensed under the MIT license:
+//   http://www.opensource.org/licenses/mit-license.php
+//
+// The word "QR Code" is registered trademark of 
+// DENSO WAVE INCORPORATED
+//   http://www.denso-wave.com/qrcode/faqpatent-e.html
+//
+//---------------------------------------------------------------------
+// Modified to work in node for this project (and some refactoring)
+//---------------------------------------------------------------------
+
+var QR8bitByte = require('./QR8bitByte');
+var QRUtil = require('./QRUtil');
+var QRPolynomial = require('./QRPolynomial');
+var QRRSBlock = require('./QRRSBlock');
+var QRBitBuffer = require('./QRBitBuffer');
+
+function QRCode(typeNumber, errorCorrectLevel) {
+	this.typeNumber = typeNumber;
+	this.errorCorrectLevel = errorCorrectLevel;
+	this.modules = null;
+	this.moduleCount = 0;
+	this.dataCache = null;
+	this.dataList = [];
+}
+
+QRCode.prototype = {
+	
+	addData : function(data) {
+		var newData = new QR8bitByte(data);
+		this.dataList.push(newData);
+		this.dataCache = null;
+	},
+	
+	isDark : function(row, col) {
+		if (row < 0 || this.moduleCount <= row || col < 0 || this.moduleCount <= col) {
+			throw new Error(row + "," + col);
+		}
+		return this.modules[row][col];
+	},
+
+	getModuleCount : function() {
+		return this.moduleCount;
+	},
+	
+	make : function() {
+		// Calculate automatically typeNumber if provided is < 1
+		if (this.typeNumber < 1 ){
+			var typeNumber = 1;
+			for (typeNumber = 1; typeNumber < 40; typeNumber++) {
+				var rsBlocks = QRRSBlock.getRSBlocks(typeNumber, this.errorCorrectLevel);
+
+				var buffer = new QRBitBuffer();
+				var totalDataCount = 0;
+				for (var i = 0; i < rsBlocks.length; i++) {
+					totalDataCount += rsBlocks[i].dataCount;
+				}
+
+				for (var x = 0; x < this.dataList.length; x++) {
+					var data = this.dataList[x];
+					buffer.put(data.mode, 4);
+					buffer.put(data.getLength(), QRUtil.getLengthInBits(data.mode, typeNumber) );
+					data.write(buffer);
+				}
+				if (buffer.getLengthInBits() <= totalDataCount * 8)
+					break;
+			}
+			this.typeNumber = typeNumber;
+		}
+		this.makeImpl(false, this.getBestMaskPattern() );
+	},
+	
+	makeImpl : function(test, maskPattern) {
+		
+		this.moduleCount = this.typeNumber * 4 + 17;
+		this.modules = new Array(this.moduleCount);
+		
+		for (var row = 0; row < this.moduleCount; row++) {
+			
+			this.modules[row] = new Array(this.moduleCount);
+			
+			for (var col = 0; col < this.moduleCount; col++) {
+				this.modules[row][col] = null;//(col + row) % 3;
+			}
+		}
+	
+		this.setupPositionProbePattern(0, 0);
+		this.setupPositionProbePattern(this.moduleCount - 7, 0);
+		this.setupPositionProbePattern(0, this.moduleCount - 7);
+		this.setupPositionAdjustPattern();
+		this.setupTimingPattern();
+		this.setupTypeInfo(test, maskPattern);
+		
+		if (this.typeNumber >= 7) {
+			this.setupTypeNumber(test);
+		}
+	
+		if (this.dataCache === null) {
+			this.dataCache = QRCode.createData(this.typeNumber, this.errorCorrectLevel, this.dataList);
+		}
+	
+		this.mapData(this.dataCache, maskPattern);
+	},
+
+	setupPositionProbePattern : function(row, col)  {
+		
+		for (var r = -1; r <= 7; r++) {
+			
+			if (row + r <= -1 || this.moduleCount <= row + r) continue;
+			
+			for (var c = -1; c <= 7; c++) {
+				
+				if (col + c <= -1 || this.moduleCount <= col + c) continue;
+				
+				if ( (0 <= r && r <= 6 && (c === 0 || c === 6) ) || 
+                     (0 <= c && c <= 6 && (r === 0 || r === 6) ) || 
+                     (2 <= r && r <= 4 && 2 <= c && c <= 4) ) {
+					this.modules[row + r][col + c] = true;
+				} else {
+					this.modules[row + r][col + c] = false;
+				}
+			}		
+		}		
+	},
+	
+	getBestMaskPattern : function() {
+	
+		var minLostPoint = 0;
+		var pattern = 0;
+	
+		for (var i = 0; i < 8; i++) {
+			
+			this.makeImpl(true, i);
+	
+			var lostPoint = QRUtil.getLostPoint(this);
+	
+			if (i === 0 || minLostPoint >  lostPoint) {
+				minLostPoint = lostPoint;
+				pattern = i;
+			}
+		}
+	
+		return pattern;
+	},
+	
+	createMovieClip : function(target_mc, instance_name, depth) {
+	
+		var qr_mc = target_mc.createEmptyMovieClip(instance_name, depth);
+		var cs = 1;
+	
+		this.make();
+
+		for (var row = 0; row < this.modules.length; row++) {
+			
+			var y = row * cs;
+			
+			for (var col = 0; col < this.modules[row].length; col++) {
+	
+				var x = col * cs;
+				var dark = this.modules[row][col];
+			
+				if (dark) {
+					qr_mc.beginFill(0, 100);
+					qr_mc.moveTo(x, y);
+					qr_mc.lineTo(x + cs, y);
+					qr_mc.lineTo(x + cs, y + cs);
+					qr_mc.lineTo(x, y + cs);
+					qr_mc.endFill();
+				}
+			}
+		}
+		
+		return qr_mc;
+	},
+
+	setupTimingPattern : function() {
+		
+		for (var r = 8; r < this.moduleCount - 8; r++) {
+			if (this.modules[r][6] !== null) {
+				continue;
+			}
+			this.modules[r][6] = (r % 2 === 0);
+		}
+	
+		for (var c = 8; c < this.moduleCount - 8; c++) {
+			if (this.modules[6][c] !== null) {
+				continue;
+			}
+			this.modules[6][c] = (c % 2 === 0);
+		}
+	},
+	
+	setupPositionAdjustPattern : function() {
+	
+		var pos = QRUtil.getPatternPosition(this.typeNumber);
+		
+		for (var i = 0; i < pos.length; i++) {
+		
+			for (var j = 0; j < pos.length; j++) {
+			
+				var row = pos[i];
+				var col = pos[j];
+				
+				if (this.modules[row][col] !== null) {
+					continue;
+				}
+				
+				for (var r = -2; r <= 2; r++) {
+				
+					for (var c = -2; c <= 2; c++) {
+					
+						if (Math.abs(r) === 2 || 
+                            Math.abs(c) === 2 ||
+                            (r === 0 && c === 0) ) {
+							this.modules[row + r][col + c] = true;
+						} else {
+							this.modules[row + r][col + c] = false;
+						}
+					}
+				}
+			}
+		}
+	},
+	
+	setupTypeNumber : function(test) {
+	
+		var bits = QRUtil.getBCHTypeNumber(this.typeNumber);
+        var mod;
+	
+		for (var i = 0; i < 18; i++) {
+			mod = (!test && ( (bits >> i) & 1) === 1);
+			this.modules[Math.floor(i / 3)][i % 3 + this.moduleCount - 8 - 3] = mod;
+		}
+	
+		for (var x = 0; x < 18; x++) {
+			mod = (!test && ( (bits >> x) & 1) === 1);
+			this.modules[x % 3 + this.moduleCount - 8 - 3][Math.floor(x / 3)] = mod;
+		}
+	},
+	
+	setupTypeInfo : function(test, maskPattern) {
+	
+		var data = (this.errorCorrectLevel << 3) | maskPattern;
+		var bits = QRUtil.getBCHTypeInfo(data);
+        var mod;
+	
+		// vertical		
+		for (var v = 0; v < 15; v++) {
+	
+			mod = (!test && ( (bits >> v) & 1) === 1);
+	
+			if (v < 6) {
+				this.modules[v][8] = mod;
+			} else if (v < 8) {
+				this.modules[v + 1][8] = mod;
+			} else {
+				this.modules[this.moduleCount - 15 + v][8] = mod;
+			}
+		}
+	
+		// horizontal
+		for (var h = 0; h < 15; h++) {
+	
+			mod = (!test && ( (bits >> h) & 1) === 1);
+			
+			if (h < 8) {
+				this.modules[8][this.moduleCount - h - 1] = mod;
+			} else if (h < 9) {
+				this.modules[8][15 - h - 1 + 1] = mod;
+			} else {
+				this.modules[8][15 - h - 1] = mod;
+			}
+		}
+	
+		// fixed module
+		this.modules[this.moduleCount - 8][8] = (!test);
+	
+	},
+	
+	mapData : function(data, maskPattern) {
+		
+		var inc = -1;
+		var row = this.moduleCount - 1;
+		var bitIndex = 7;
+		var byteIndex = 0;
+		
+		for (var col = this.moduleCount - 1; col > 0; col -= 2) {
+	
+			if (col === 6) col--;
+	
+			while (true) {
+	
+				for (var c = 0; c < 2; c++) {
+					
+					if (this.modules[row][col - c] === null) {
+						
+						var dark = false;
+	
+						if (byteIndex < data.length) {
+							dark = ( ( (data[byteIndex] >>> bitIndex) & 1) === 1);
+						}
+	
+						var mask = QRUtil.getMask(maskPattern, row, col - c);
+	
+						if (mask) {
+							dark = !dark;
+						}
+						
+						this.modules[row][col - c] = dark;
+						bitIndex--;
+	
+						if (bitIndex === -1) {
+							byteIndex++;
+							bitIndex = 7;
+						}
+					}
+				}
+								
+				row += inc;
+	
+				if (row < 0 || this.moduleCount <= row) {
+					row -= inc;
+					inc = -inc;
+					break;
+				}
+			}
+		}
+		
+	}
+
+};
+
+QRCode.PAD0 = 0xEC;
+QRCode.PAD1 = 0x11;
+
+QRCode.createData = function(typeNumber, errorCorrectLevel, dataList) {
+	
+	var rsBlocks = QRRSBlock.getRSBlocks(typeNumber, errorCorrectLevel);
+	
+	var buffer = new QRBitBuffer();
+	
+	for (var i = 0; i < dataList.length; i++) {
+		var data = dataList[i];
+		buffer.put(data.mode, 4);
+		buffer.put(data.getLength(), QRUtil.getLengthInBits(data.mode, typeNumber) );
+		data.write(buffer);
+	}
+
+	// calc num max data.
+	var totalDataCount = 0;
+	for (var x = 0; x < rsBlocks.length; x++) {
+		totalDataCount += rsBlocks[x].dataCount;
+	}
+
+	if (buffer.getLengthInBits() > totalDataCount * 8) {
+		throw new Error("code length overflow. (" + 
+            buffer.getLengthInBits() + 
+            ">" +  
+            totalDataCount * 8 + 
+            ")");
+	}
+
+	// end code
+	if (buffer.getLengthInBits() + 4 <= totalDataCount * 8) {
+		buffer.put(0, 4);
+	}
+
+	// padding
+	while (buffer.getLengthInBits() % 8 !== 0) {
+		buffer.putBit(false);
+	}
+
+	// padding
+	while (true) {
+		
+		if (buffer.getLengthInBits() >= totalDataCount * 8) {
+			break;
+		}
+		buffer.put(QRCode.PAD0, 8);
+		
+		if (buffer.getLengthInBits() >= totalDataCount * 8) {
+			break;
+		}
+		buffer.put(QRCode.PAD1, 8);
+	}
+
+	return QRCode.createBytes(buffer, rsBlocks);
+};
+
+QRCode.createBytes = function(buffer, rsBlocks) {
+
+	var offset = 0;
+	
+	var maxDcCount = 0;
+	var maxEcCount = 0;
+	
+	var dcdata = new Array(rsBlocks.length);
+	var ecdata = new Array(rsBlocks.length);
+	
+	for (var r = 0; r < rsBlocks.length; r++) {
+
+		var dcCount = rsBlocks[r].dataCount;
+		var ecCount = rsBlocks[r].totalCount - dcCount;
+
+		maxDcCount = Math.max(maxDcCount, dcCount);
+		maxEcCount = Math.max(maxEcCount, ecCount);
+		
+		dcdata[r] = new Array(dcCount);
+		
+		for (var i = 0; i < dcdata[r].length; i++) {
+			dcdata[r][i] = 0xff & buffer.buffer[i + offset];
+		}
+		offset += dcCount;
+		
+		var rsPoly = QRUtil.getErrorCorrectPolynomial(ecCount);
+		var rawPoly = new QRPolynomial(dcdata[r], rsPoly.getLength() - 1);
+
+		var modPoly = rawPoly.mod(rsPoly);
+		ecdata[r] = new Array(rsPoly.getLength() - 1);
+		for (var x = 0; x < ecdata[r].length; x++) {
+            var modIndex = x + modPoly.getLength() - ecdata[r].length;
+			ecdata[r][x] = (modIndex >= 0)? modPoly.get(modIndex) : 0;
+		}
+
+	}
+	
+	var totalCodeCount = 0;
+	for (var y = 0; y < rsBlocks.length; y++) {
+		totalCodeCount += rsBlocks[y].totalCount;
+	}
+
+	var data = new Array(totalCodeCount);
+	var index = 0;
+
+	for (var z = 0; z < maxDcCount; z++) {
+		for (var s = 0; s < rsBlocks.length; s++) {
+			if (z < dcdata[s].length) {
+				data[index++] = dcdata[s][z];
+			}
+		}
+	}
+
+	for (var xx = 0; xx < maxEcCount; xx++) {
+		for (var t = 0; t < rsBlocks.length; t++) {
+			if (xx < ecdata[t].length) {
+				data[index++] = ecdata[t][xx];
+			}
+		}
+	}
+
+	return data;
+
+};
+
+module.exports = QRCode;
+
+};
+window.QRCode=req('./index');})();
+</script>
+<script>
+/* Health Radar anomaly engine.
+ * Learns a personal baseline (vitals regressed on activity) and scores new readings with a
+ * Mahalanobis distance. Works with any subset of channels (hr always, spo2/temp optional),
+ * so an HR-only band is analysed honestly instead of with made-up SpO2/temperature values. */
+(function (root, factory) {
+  if (typeof module === 'object' && module.exports) module.exports = factory();
+  else root.Radar = factory();
+})(typeof self !== 'undefined' ? self : this, function () {
+  'use strict';
+  const KEYS = ['hr', 'sp', 'tp'];
+  const FLOOR = [4, 0.04, 0.0064];        // minimum variance per channel (noise floor)
+  const PRIOR = [0.9, -0.004, 0.01];      // fallback slope vs activity when there is no activity variation yet
+  const THR = { 1: 16, 2: 21, 3: 25 };    // squared Mahalanobis alert threshold by dimension
+  const NAMES = ['Heart rate', 'Blood oxygen', 'Temperature'];
+  const UNITS = ['bpm', '%', '°C'];
+  const DEC = [0, 1, 2];
+
+  const gz = s => s * Math.sqrt(-2 * Math.log(1 - Math.random())) * Math.cos(6.2832 * Math.random());
+
+  function inv(M) {
+    const n = M.length;
+    const A = M.map((r, i) => [...r, ...Array.from({ length: n }, (_, j) => (i === j ? 1 : 0))]);
+    for (let c = 0; c < n; c++) {
+      let p = c;
+      for (let r = c + 1; r < n; r++) if (Math.abs(A[r][c]) > Math.abs(A[p][c])) p = r;
+      if (Math.abs(A[p][c]) < 1e-12) return null;
+      [A[c], A[p]] = [A[p], A[c]];
+      const d = A[c][c];
+      for (let j = 0; j < 2 * n; j++) A[c][j] /= d;
+      for (let r = 0; r < n; r++) {
+        if (r === c) continue;
+        const f = A[r][c];
+        if (f) for (let j = 0; j < 2 * n; j++) A[r][j] -= f * A[c][j];
+      }
+    }
+    return A.map(r => r.slice(n));
+  }
+
+  class Engine {
+    constructor(o = {}) {
+      this.minRows = o.minRows || 225;
+      this.live = !!o.live;
+      this.alpha = o.alpha || (o.live ? 0.08 : 0.12);   // activity smoothing: heart rate lags behind movement
+      this.max = 700;
+      this.buf = [];            // rows: [ctx, hr, sp|null, tp|null]
+      this.ctx = 5;             // smoothed activity
+      this.fits = {};
+      this.streak = 0;
+      this.alerted = false;
+      this.sinceFit = 0;
+      this.hold = 0;
+    }
+    chans(s) {
+      const c = [0];
+      if (s.sp != null) c.push(1);
+      if (s.tp != null) c.push(2);
+      return c;
+    }
+    rows(c) { return this.buf.filter(b => c.every(j => b[j + 1] != null)); }
+    add(row) { this.buf.push(row); if (this.buf.length > this.max) this.buf.shift(); }
+    doFit(c) {
+      const b = this.rows(c), n = b.length;
+      if (n < 10) return false;
+      let ma = 0, va = 0;
+      b.forEach(x => (ma += x[0])); ma /= n;
+      b.forEach(x => (va += (x[0] - ma) ** 2)); va /= n;
+      const a = [], k = [];
+      for (const j of c) {
+        let m = 0, cv = 0;
+        b.forEach(x => (m += x[j + 1])); m /= n;
+        b.forEach(x => (cv += (x[0] - ma) * (x[j + 1] - m)));
+        const sl = va > 4 ? cv / n / va : PRIOR[j];
+        k.push(sl); a.push(m - sl * ma);
+      }
+      const res = b.map(x => c.map((j, i) => x[j + 1] - a[i] - k[i] * x[0]));
+      const C = c.map((_, i) => c.map((__, l) => res.reduce((q, r) => q + r[i] * r[l], 0) / n + (i === l ? FLOOR[c[i]] : 0)));
+      const iv = inv(C);
+      if (!iv) return false;
+      this.fits[c.join()] = { c, a, k, iv, sd: C.map((r, i) => Math.sqrt(r[i])) };
+      return true;
+    }
+    pick(c) {
+      const key = c.join();
+      if (this.fits[key]) return this.fits[key];
+      if (this.rows(c).length >= this.minRows && this.doFit(c)) return this.fits[key];
+      let best = null;   // fall back to the richest fit that only needs channels we have right now
+      for (const k in this.fits) {
+        const f = this.fits[k];
+        if (f.c.every(j => c.includes(j)) && (!best || f.c.length > best.c.length)) best = f;
+      }
+      return best;
+    }
+    ack() { this.alerted = false; this.streak = 0; }
+    push(s, o = {}) {
+      if (s.hr == null) return { state: 'nodata' };
+      if (Math.abs(s.act - this.ctx) > 15) this.hold = 12; else if (this.hold > 0) this.hold--;
+      const trans = this.hold > 0;      // activity is changing fast: heart rate is still catching up
+      this.ctx += (s.act - this.ctx) * this.alpha;
+      const row = [this.ctx, s.hr, s.sp == null ? null : s.sp, s.tp == null ? null : s.tp];
+      const c = this.chans(s);
+      const f = this.pick(c);
+      if (!f) {
+        this.add(row);
+        return { state: 'calibrating', progress: Math.min(1, this.rows(c).length / this.minRows), mask: c };
+      }
+      const r = f.c.map((j, i) => s[KEYS[j]] - f.a[i] - f.k[i] * this.ctx);
+      let d = 0;
+      for (let i = 0; i < r.length; i++) for (let j = 0; j < r.length; j++) d += r[i] * f.iv[i][j] * r[j];
+      // Extrapolation guard: far above any activity level seen while learning, the linear baseline is unreliable,
+      // so relative scores are damped (absolute guard rails below still apply). The baseline widens as it learns.
+      let maxTrain = 0;
+      for (const b of this.buf) if (b[0] > maxTrain) maxTrain = b[0];
+      const over = Math.max(0, this.ctx - maxTrain - 8);
+      d /= 1 + (over / 8) ** 2;
+      const z = r.map((x, i) => x / f.sd[i]);
+      const exp = f.c.map((j, i) => f.a[i] + f.k[i] * this.ctx);
+      const zv = {}; f.c.forEach((j, i) => (zv[KEYS[j]] = z[i]));
+      const abs = (s.sp != null && s.sp < 88) || s.hr >= 185 || s.hr <= 35;   // guard rails independent of baseline
+      const hot = d > THR[f.c.length] || abs;
+      this.streak = abs ? this.streak + 1 : hot && (!trans || d > 130) ? this.streak + 1 : hot ? this.streak : 0;
+      const need = d > 200 ? 2 : this.live ? 5 : 3;
+      let fire = false;
+      if (!this.alerted && this.streak >= need) { fire = true; this.alerted = true; }
+      if (!this.alerted && !o.freeze && d < 9) {
+        this.add(row);
+        if (++this.sinceFit >= 15) { this.sinceFit = 0; this.doFit(f.c); }
+      }
+      const out = { state: 'ready', score: d, watching: d > 12, mask: f.c, zv, ctx: this.ctx, extrap: over > 0, fire: false };
+      if (fire) {
+        const crit = d > 150 || (s.sp != null && s.sp < 90) || abs;
+        const up = zv.hr > 3, dn = zv.sp < -3;
+        const pattern = up && dn ? 'Rising heart rate with falling blood oxygen (possible cardio-respiratory event)'
+          : up && this.ctx < 8 ? 'Heart-rate spike at rest, not explained by movement'
+          : dn ? 'Blood-oxygen drop (possible hypoxia)'
+          : zv.hr < -3 && this.ctx < 8 ? 'Heart rate far below your usual at rest'
+          : abs ? 'A reading outside safe absolute limits'
+          : 'Unusual combination of vitals versus your baseline';
+        let idx = f.c.filter((j, i) => Math.abs(z[i]) > 2.5);
+        if (!idx.length) idx = [0];
+        const findings = idx.map(j => { const i = f.c.indexOf(j); return { name: NAMES[j], unit: UNITS[j], dec: DEC[j], value: s[KEYS[j]], exp: exp[i], z: z[i] }; });
+        Object.assign(out, { fire: true, crit, pattern, findings, act: s.act });
+      }
+      return out;
+    }
+    toJSON() { return { ctx: this.ctx, buf: this.buf.slice(-400).map(r => r.map(v => (v == null ? null : +v.toFixed(2)))) }; }
+    load(j) { if (j && Array.isArray(j.buf)) { this.buf = j.buf.slice(-this.max); this.ctx = j.ctx || 5; } }
+  }
+
+  class Sim {
+    constructor() { this.s = { act: 5, actT: 5, lag: 5, hr: 62, sp: 97.6, tp: 33.2, n: [0, 0, 0], ev: null }; }
+    inject(k, left) { this.s.ev = { k, left, t: 0 }; }
+    step() {
+      const s = this.s, e = s.ev ? s.ev.k : '';
+      if (!s.ev && Math.random() < 0.015) s.actT = [3, 3, 3, 3, 20, 35, 50][(Math.random() * 7) | 0];
+      let spT = 97.6 - 0.004 * s.lag, tpT = 33.2 + 0.01 * s.lag, hK = 0.3;
+      if (e === 'work') s.actT = 85;
+      if (e === 'emerg') { s.actT = 0; hK = 0.55; }
+      s.act += (s.actT - s.act) * 0.2;
+      s.lag += (s.act - s.lag) * 0.25;
+      let hT = 62 + 0.9 * s.lag;
+      if (e === 'emerg') hT = 160;
+      if (e === 'hyp') { hT += 25; spT = 84; s.actT = 0; }
+      s.hr += (hT - s.hr) * hK; s.sp += (spT - s.sp) * 0.3; s.tp += (tpT - s.tp) * 0.08;
+      s.n = s.n.map((x, i) => 0.7 * x + gz([1.6, 0.25, 0.07][i]));
+      if (s.ev && --s.ev.left <= 0) { s.ev = null; s.actT = 3; }
+      return { act: Math.max(0, s.act + gz(1.2)), hr: s.hr + s.n[0], sp: Math.min(100, s.sp + s.n[1]), tp: s.tp + s.n[2] };
+    }
+  }
+
+  return { Engine, Sim, inv, NAMES, UNITS };
+});
+
+</script>
+<script>
+'use strict';
+/* Health Radar - personal health dashboard (PWA). All data stays in this browser. Not a medical device. */
+const $ = s => document.querySelector(s);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const fmt = n => Math.round(n).toLocaleString();
+const dk = o => { const d = new Date(Date.now() - o * 864e5); return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate(); };
+const toast = (m, ms = 2600) => { const t = $('#toast'); if (!t) return; t.textContent = m; t.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('on'), ms); };
+
+// ---------- storage ----------
+const KEY = 'healthradar.v2';
+const GOAL0 = { steps: 10000, move: 30, pts: 30, water: 2500 };
+let DB = { accounts: [], cur: null }, U = null;
+const S = { stage: 'welcome', tab: 'home', det: null, rng: 7, ctx: 'auto', noInst: false };
+function load() {
+  try { DB = JSON.parse(localStorage.getItem(KEY)) || DB; } catch (e) { }
+  DB.accounts = DB.accounts || [];
+  try {   // import accounts from the first version of the app (weak legacy hash is upgraded on next login)
+    const old = JSON.parse(localStorage.getItem('acc') || '[]');
+    old.forEach(o => { if (o && o.e && !DB.accounts.find(a => a.e === o.e)) DB.accounts.push({ name: o.name, e: o.e, legacy: o.p, profile: o.profile, days: o.days || {}, acts: o.acts || [] }); });
+    if (old.length) localStorage.removeItem('acc');
+  } catch (e) { }
+}
+function save() { try { localStorage.setItem(KEY, JSON.stringify(DB)); } catch (e) { toast('Could not save: browser storage is full or blocked.'); } }
+const G = () => (U.goal = Object.assign({}, GOAL0, U.goal));
+const CT = () => (U.contacts = U.contacts || { dn: '', dp: '', de: '', en: '', ep: '', emg: /Calcutta|Kolkata/.test(Intl.DateTimeFormat().resolvedOptions().timeZone) ? '112' : '911' });
+
+// ---------- password hashing ----------
+const enc = new TextEncoder();
+const b64 = u => btoa(String.fromCharCode(...u));
+const unb64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+const weak = s => { let h = 5381; for (const c of s) h = (h * 33 ^ c.charCodeAt(0)) >>> 0; return h; };
+async function hashPw(pw, salt) {
+  if (window.crypto && crypto.subtle) {
+    const key = await crypto.subtle.importKey('raw', enc.encode(pw), 'PBKDF2', false, ['deriveBits']);
+    const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', salt: unb64(salt), iterations: 150000, hash: 'SHA-256' }, key, 256);
+    return 'p1:' + b64(new Uint8Array(bits));
+  }
+  return 'w1:' + weak(pw + salt);   // only when the browser has no Web Crypto (non-secure context)
+}
+const newSalt = () => b64(crypto.getRandomValues(new Uint8Array(16)));
+
+// ---------- data ----------
+const M = {
+  steps: { n: 'Steps', u: '', c: '--blue', lo: 0, t: 'You average {a} steps a day.', e: 'Turn on step tracking on the Home tab and keep your phone with you.' },
+  hr: { n: 'Heart rate', u: ' bpm', c: '--red', lo: 40, t: 'Your average measured heart rate is {a} bpm.', e: 'Measure with the camera, a Bluetooth band, or log a reading.', h: 'Enter a reading in bpm (from your watch or an oximeter).' },
+  sleep: { n: 'Sleep', u: ' h', c: '--yel', lo: 0, t: 'You sleep {a} hours a night on average. Aim for 7 to 9.', e: "Log last night's sleep to see trends.", h: 'Hours slept last night.' },
+  spo2: { n: 'Blood oxygen', u: '%', c: '--blue', lo: 80, t: 'Your blood oxygen averages {a}%. Normal is usually 95 to 100%.', e: 'Log a reading from a pulse oximeter or connect one over Bluetooth.', h: 'SpO₂ % from a pulse oximeter or watch.' },
+  wt: { n: 'Weight', u: ' kg', c: '--green', lo: 0, t: 'Your weight averages {a} kg this week.', e: 'Log your weight to see trends.', h: 'Weight in kg.' },
+  temp: { n: 'Body temperature', u: ' °C', c: '--yel', lo: 30, t: 'Your average body temperature is {a} °C.', e: 'Connect a Bluetooth thermometer or log a reading.', h: 'Temperature in °C.' },
+  water: { n: 'Water', u: ' ml', c: '--blue', lo: 0, t: 'You drink about {a} ml a day.', e: 'Log your water on the Home tab.' },
+  cal: { n: 'Calories (est.)', u: ' kcal', c: '--red', lo: 0, t: 'You burn about {a} kcal a day (estimated from your profile and steps).', e: 'Calories are estimated from your profile and your steps.' }
+};
+const R = { temp: [30, 45], hr: [30, 220], spo2: [70, 100], sleep: [0, 24], wt: [20, 300] };
+const K = { Walk: 1, Run: 2, Cycling: 1.5, Yoga: .5, Swim: 1.5 };
+let D = {};
+const today = () => { U.days = U.days || {}; return (U.days[dk(0)] = U.days[dk(0)] || { hr: [] }); };
+const WL = () => [6, 5, 4, 3, 2, 1, 0].map(o => ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][new Date(Date.now() - o * 864e5).getDay()]);
+function calc(st, o) { const p = U.profile, b = 10 * p.w + 6.25 * p.h - 5 * p.a + (p.s == 'Male' ? 5 : p.s == 'Female' ? -161 : -78), n = new Date(), f = o ? 1 : (n.getHours() * 60 + n.getMinutes()) / 1440; return b * f + st * .0005 * p.w; }
+function rebuild() {
+  D = {};
+  for (const k in M) D[k] = [6, 5, 4, 3, 2, 1, 0].map(o => {
+    const d = (U.days || {})[dk(o)]; if (!d) return null;
+    if (k == 'hr') return d.hr && d.hr.length ? Math.round(d.hr.reduce((a, b) => a + b) / d.hr.length) : null;
+    if (k == 'cal') return d.steps ? Math.round(calc(d.steps, o)) : null;
+    return d[k] == null ? null : d[k];
+  });
+}
+const avg = k => { const p = D[k].filter(v => v != null); return p.length ? p.reduce((a, b) => a + b) / p.length : null; };
+const bmi = () => (U.profile.w / ((U.profile.h / 100) ** 2)).toFixed(1);
+const bmiCat = () => { const b = +bmi(); return b < 18.5 ? 'Underweight' : b < 25 ? 'Healthy' : b < 30 ? 'Overweight' : 'Obese'; };
+
+// ---------- device capabilities ----------
+const standalone = () => (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
+const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent);
+const CAP = () => ({
+  secure: window.isSecureContext,
+  ble: !!navigator.bluetooth,
+  motion: 'DeviceMotionEvent' in window,
+  cam: !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia),
+  notif: 'Notification' in window,
+  wake: 'wakeLock' in navigator
+});
+
+// ---------- step counting (phone motion sensor) ----------
+const TR = { on: false, got: false, lp: 9.8, b: 9.8, up: false, last: 0, min: 0, ms: Date.now(), err: '', dirty: false, act: 0, lastEv: 0, wl: null };
+function onMotion(e) {
+  const a = e.accelerationIncludingGravity; if (!a || a.x == null) return; TR.got = true;
+  const m = Math.hypot(a.x, a.y, a.z), t = performance.now();
+  TR.lp += (m - TR.lp) * .25; TR.b += (m - TR.b) * .02; const s = TR.lp - TR.b;
+  TR.act += (Math.min(100, Math.abs(m - TR.b) * 25) - TR.act) * .03; TR.lastEv = t;
+  if (s > 1 && !TR.up && t - TR.last > 300) { TR.up = true; TR.last = t; addSteps(); } else if (s < .4) TR.up = false;
+}
+function addSteps() {
+  if (!U) return; const d = today(); d.steps = (d.steps || 0) + 1; TR.min++; TR.dirty = true;
+  if (Date.now() - TR.ms >= 60000) { const c = TR.min; if (c >= 40) d.move = (d.move || 0) + 1; if (c >= 130) d.pts = (d.pts || 0) + 2; else if (c >= 100) d.pts = (d.pts || 0) + 1; TR.min = 0; TR.ms = Date.now(); }
+}
+async function wake() { try { if ('wakeLock' in navigator && (TR.on || MON.on || (U && U.sleepAt)) && document.visibilityState === 'visible') TR.wl = await navigator.wakeLock.request('screen'); } catch (e) { } }
+document.addEventListener('visibilitychange', () => { if (TR.on || MON.on || (U && U.sleepAt)) wake(); });
+async function trackOn() {
+  TR.err = '';
+  try {
+    if (!CAP().motion) throw Error('This browser has no motion sensor. Open the app on a phone.');
+    if (window.DeviceMotionEvent && DeviceMotionEvent.requestPermission && await DeviceMotionEvent.requestPermission() != 'granted') throw Error('Motion permission was denied. Allow it in Settings and try again.');
+    addEventListener('devicemotion', onMotion); TR.on = true; TR.got = false; wake(); draw();
+    setTimeout(() => { if (!TR.got && TR.on) { trackOff(); TR.err = 'No motion data received. Open the app on a phone (computers have no step sensor).'; draw(); } }, 4000);
+  } catch (e) { TR.err = e.message || 'Could not start step tracking.'; draw(); }
+}
+function trackOff() { removeEventListener('devicemotion', onMotion); TR.on = false; if (!MON.on && !(U && U.sleepAt)) { try { TR.wl && TR.wl.release(); } catch (e) { } TR.wl = null; } }
+
+// ---------- Bluetooth (standard GATT health profiles) ----------
+const BL = { on: false, name: '', d: null, v: {}, lastLog: 0, retry: 0, manual: false, lastSp: 0 };
+const MON = { on: false, since: 0, n: 0, lastHr: 0, gaps: 0 };
+const live = (k, age) => { const x = BL.v[k]; return x && Date.now() - x.t < age ? x.v : null; };
+function setLive(k, v) {
+  BL.v[k] = { v, t: Date.now() }; if (!U) return; const d = today();
+  if (k === 'hr') { const t = Date.now(); MON.n++; MON.lastHr = t; if (U.sleepAt) { const a = U.sleepAcc = U.sleepAcc || { hs: 0, hn: 0, sm: null }; a.hs += v; a.hn++; } if (t - BL.lastLog > 60000) { BL.lastLog = t; d.hr.push(Math.round(v)); TR.dirty = true; } }
+  else if (k === 'sp') { d.spo2 = Math.round(v); TR.dirty = true; const t = Date.now(); if (U.sleepAt) { const a = U.sleepAcc = U.sleepAcc || { hs: 0, hn: 0, sm: null }; a.sm = a.sm == null ? v : Math.min(a.sm, v); } if (t - BL.lastSp > 300000) { BL.lastSp = t; U.spoAuto = U.spoAuto || []; U.spoAuto.push({ t, v: +v.toFixed(1) }); if (U.spoAuto.length > 300) U.spoAuto.shift(); } }
+  else if (k === 'tp') { d.temp = +v.toFixed(1); TR.dirty = true; }
+}
+const sflo = (v, o) => { const r = v.getUint16(o, true); let m = r & 4095, e = r >> 12; if (m >= 2048) m -= 4096; if (e >= 8) e -= 16; return m * Math.pow(10, e); };
+const flo = (v, o) => { const r = v.getUint32(o, true); let m = r & 16777215, e = r >>> 24; if (m >= 8388608) m -= 16777216; if (e >= 128) e -= 256; return m * Math.pow(10, e); };
+const pox = v => { const s = sflo(v, 1), p = sflo(v, 3); if (s >= 70 && s <= 100) setLive('sp', s); if (p > 30 && p < 220) setLive('hr', p); };
+const PROF = [
+  [0x180D, 0x2A37, v => { const h = (v.getUint8(0) & 1) ? v.getUint16(1, true) : v.getUint8(1); if (h > 30 && h < 230) setLive('hr', h); }, 'heart rate'],
+  [0x1822, 0x2A5F, pox, 'SpO₂'], [0x1822, 0x2A5E, pox, 'SpO₂'],
+  [0x1809, 0x2A1C, v => { let t = flo(v, 1); if (v.getUint8(0) & 1) t = (t - 32) / 1.8; if (t > 30 && t < 45) setLive('tp', t); }, 'temperature'],
+  [0x181D, 0x2A9D, v => { const w = v.getUint16(1, true) * ((v.getUint8(0) & 1) ? .01 * .45359237 : .005); if (w > 20 && w < 300) { today().wt = +w.toFixed(1); U.profile.w = +w.toFixed(1); TR.dirty = true; } }, 'weight']
+];
+async function bleSub(srv) {
+  const feat = [];
+  for (const [s, c, f, label] of PROF) {
+    try { const ch = await (await srv.getPrimaryService(s)).getCharacteristic(c); await ch.startNotifications(); ch.addEventListener('characteristicvaluechanged', e => { try { f(e.target.value); } catch (x) { } }); if (!feat.includes(label)) feat.push(label); } catch (x) { }
+  }
+  return feat;
+}
+const RETRY_MS = [2000, 5000, 10000, 20000, 30000, 30000];
+async function bleRetry(d, n) {
+  if (BL.manual || BL.on || d !== BL.d) return;
+  if (n > RETRY_MS.length) { BL.retry = 0; MON.gaps++; toast('Could not reconnect. Tap Connect to pair again.', 4000); draw(); return; }
+  BL.retry = n; draw();
+  await new Promise(r => setTimeout(r, RETRY_MS[n - 1]));
+  if (BL.manual || BL.on || d !== BL.d) return;
+  try { const srv = await d.gatt.connect(); const f = await bleSub(srv); if (!f.length) throw Error('no data'); BL.on = true; BL.retry = 0; MON.gaps++; toast('Reconnected to ' + (d.name || 'device'), 3000); draw(); }
+  catch (e) { bleRetry(d, n + 1); }
+}
+async function connectBLE() {
+  TR.err = '';
+  if (!navigator.bluetooth) { TR.err = isIOS() ? 'Safari on iPhone does not support Web Bluetooth. Use the camera heart-rate scan or type readings in. On Android, use Chrome.' : 'Bluetooth is not available in this browser. Use Chrome or Edge on Android or desktop.'; return draw(); }
+  try {
+    const d = await navigator.bluetooth.requestDevice({ acceptAllDevices: true, optionalServices: [0x180D, 0x1822, 0x1809, 0x181D] });
+    BL.d = d; const srv = await d.gatt.connect(), feat = await bleSub(srv);
+    if (!feat.length) { srv.disconnect(); TR.err = (d.name || 'That device') + ' connected but shares no standard health data. Apple Watch, Fitbit and most Samsung/Garmin watches use private protocols. Use a standard heart-rate band, pulse oximeter, thermometer or scale, or turn on heart-rate broadcast on your watch.'; return draw(); }
+    d.addEventListener('gattserverdisconnected', () => { BL.on = false; BL.v = {}; if (BL.manual) { BL.manual = false; toast('Bluetooth device disconnected'); draw(); } else { toast('Signal lost, reconnecting…'); bleRetry(d, 1); } });
+    BL.on = true; BL.name = (d.name || 'Device') + ' (' + feat.join(', ') + ')'; draw();
+  } catch (e) { TR.err = e.name == 'NotFoundError' ? 'No device selected.' : 'Bluetooth connection failed: ' + (e.message || e.name) + '. Make sure the device is on, nearby and not connected to another app.'; draw(); }
+}
+function disconnect() { BL.manual = true; MON.on && monStop(); trackOff(); try { BL.d && BL.d.gatt.disconnect(); } catch (e) { } BL.on = false; BL.v = {}; draw(); }
+
+// ---------- camera heart rate (PPG) ----------
+let PP = null;
+function ov(h) { let o = $('#ov'); if (!o) { o = document.createElement('div'); o.id = 'ov'; o.className = 'ovl'; document.body.appendChild(o); } o.innerHTML = '<div>' + h + '</div>'; }
+const ovx = () => { const o = $('#ov'); o && o.remove(); };
+function endPPG() { if (PP) { PP.run = false; PP.st.getTracks().forEach(t => t.stop()); PP = null; } }
+function bpm(T, Rr) {
+  const n = Rr.length; if (n < 150) return null;
+  const fps = n / ((T[n - 1] - T[0]) / 1000), w = Math.max(2, Math.round(fps * .5));
+  const x = Rr.map((v, i) => { let s = 0, k = 0; for (let j = Math.max(0, i - w); j <= Math.min(n - 1, i + w); j++) { s += Rr[j]; k++; } return v - s / k; });
+  const y = x.map((v, i) => i && i < n - 1 ? (x[i - 1] + v + x[i + 1]) / 3 : v), sd = Math.sqrt(y.reduce((a, b) => a + b * b, 0) / n), P = [];
+  for (let i = 1; i < n - 1; i++) if (y[i] > sd * .4 && y[i] >= y[i - 1] && y[i] > y[i + 1] && (!P.length || T[i] - P[P.length - 1] > 350)) P.push(T[i]);
+  if (P.length < 12) return null;
+  const iv = P.slice(1).map((t, i) => t - P[i]).sort((a, b) => a - b), b = 60000 / iv[iv.length >> 1];
+  return b >= 40 && b <= 190 ? Math.round(b) : null;
+}
+async function measure() {
+  endPPG();
+  ov(`<h1 style="font-weight:500">Measure heart rate</h1><div class="card"><div class="sub">Cover the rear camera <b>and flash</b> fully with your fingertip. Press lightly and keep still for 30 seconds.</div></div><div class="card"><canvas id="wv" width="320" height="90" style="width:100%;height:90px"></canvas><div id="pm" class="big" style="margin-top:8px">Starting camera…</div><div class="sub" id="ps"></div></div><button class="p" onclick="endPPG();ovx()">Cancel</button>`);
+  if (!CAP().cam) { $('#pm').textContent = 'Camera unavailable'; $('#ps').textContent = CAP().secure ? 'This device has no camera access.' : 'The camera only works on a secure (https) page.'; return; }
+  let st;
+  try { st = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 160 }, height: { ideal: 120 } }, audio: false }); }
+  catch (e) { $('#pm').textContent = 'Camera unavailable'; $('#ps').textContent = e.name == 'NotAllowedError' ? 'Allow camera access in your browser settings and try again.' : 'No camera found on this device.'; return; }
+  try { await st.getVideoTracks()[0].applyConstraints({ advanced: [{ torch: true }] }); } catch (e) { }
+  const v = document.createElement('video'); v.srcObject = st; v.muted = true; v.playsInline = true; await v.play();
+  const c = document.createElement('canvas'); c.width = 32; c.height = 24; const x = c.getContext('2d', { willReadFrequently: true });
+  PP = { st, run: true }; let T = [], Rr = [], t0 = performance.now(); const DUR = 30000;
+  const loop = () => {
+    if (!PP || !PP.run) return; const t = performance.now() - t0;
+    x.drawImage(v, 0, 0, 32, 24); const d = x.getImageData(0, 0, 32, 24).data; let r = 0, g = 0;
+    for (let i = 0; i < d.length; i += 4) { r += d[i]; g += d[i + 1]; } r /= 768; g /= 768;
+    if (!(r > 100 && g < r * .6)) { T = []; Rr = []; t0 = performance.now(); $('#pm').textContent = 'Cover camera and flash'; $('#ps').textContent = ''; }
+    else {
+      T.push(t); Rr.push(r); $('#pm').textContent = Math.round(t / DUR * 100) + '%'; $('#ps').textContent = 'Hold still…';
+      const w = $('#wv'); if (w) { const g2 = w.getContext('2d'), a = Rr.slice(-120), lo = Math.min(...a), hi = Math.max(...a); g2.clearRect(0, 0, 320, 90); g2.strokeStyle = '#d93025'; g2.lineWidth = 2; g2.beginPath(); a.forEach((q, i) => { const X = i / 119 * 320, Y = 85 - (q - lo) / (hi - lo || 1) * 80; i ? g2.lineTo(X, Y) : g2.moveTo(X, Y); }); g2.stroke(); }
+      if (t >= DUR) {
+        const b = bpm(T, Rr); endPPG();
+        if (b) { today().hr.push(b); save(); ov(`<h1 style="font-weight:500">Heart rate</h1><div class="card"><div class="big" style="font-size:48px">${b} <small>bpm</small></div><div class="sub">Saved to today. Camera readings are estimates, not medical measurements.</div></div><button class="p" onclick="ovx();draw()">Done</button>`); }
+        else ov(`<h1 style="font-weight:500">No clear reading</h1><div class="card">Cover the camera and flash completely, press lightly and stay still, then try again.</div><button class="p" onclick="measure()">Try again</button> <button class="p o" onclick="ovx()">Close</button>`);
+        return;
+      }
+    }
+    requestAnimationFrame(loop);
+  };
+  loop();
+}
+
+// ---------- install (PWA) ----------
+let DEF = null;
+addEventListener('beforeinstallprompt', e => { e.preventDefault(); DEF = e; if (S.stage == 'app' && S.tab == 'home' && !S.det && !$('#ov')) draw(); });
+addEventListener('appinstalled', () => { DEF = null; toast('Installed. Open Health Radar from your home screen.'); draw(); });
+async function doInstall() { if (!DEF) return; DEF.prompt(); try { await DEF.userChoice; } catch (e) { } DEF = null; draw(); }
+function installCard() {
+  if (standalone() || S.noInst || !/^https?:$/.test(location.protocol)) return '';
+  const body = DEF ? `Add Health Radar to your home screen for a full-screen app that works offline.<div class="acts"><button class="p" onclick="doInstall()">Install app</button><button class="p o" onclick="S.noInst=true;draw()">Not now</button></div>`
+    : isIOS() ? `In Safari, tap the <b>Share</b> button, then <b>Add to Home Screen</b>.<div class="acts"><button class="p o sm" onclick="S.noInst=true;draw()">Dismiss</button></div>`
+      : `Open your browser menu and choose <b>Install app</b> or <b>Add to Home screen</b>.<div class="acts"><button class="p o sm" onclick="S.noInst=true;draw()">Dismiss</button></div>`;
+  return `<div class="card tip"><h2 style="color:var(--blue)">Install on your phone</h2>${body}</div>`;
+}
+function shareQR() {
+  let q = '';
+  try {
+    const t = new QRCode(0, 0); t.addData(location.href.split('#')[0]); t.make();
+    const n = t.getModuleCount(), m = 2; let p = '';
+    for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (t.isDark(r, c)) p += `M${c + m} ${r + m}h1v1h-1z`;
+    q = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${n + 2 * m} ${n + 2 * m}" shape-rendering="crispEdges" role="img" aria-label="QR code for this page"><path fill="#000" d="${p}"/></svg>`;
+  } catch (e) { }
+  const local = /^(localhost|127\.|192\.168\.|10\.)/.test(location.hostname) || location.protocol == 'file:';
+  ov(`<h1 style="font-weight:500">Open on your phone</h1><div class="card"><div class="sub">Scan this code with your phone camera, then install the app from the browser menu (or the banner on the Home tab).</div></div><div class="qr">${q || 'QR code unavailable'}</div>${local ? '<div class="card warn" style="margin-top:12px">This address only works on this computer or network. Host the app on https (see README) so any phone can open it.</div>' : ''}<button class="p wide" style="margin-top:12px" onclick="ovx()">Close</button>`);
+}
+
+// ---------- views ----------
+const tag = (t, c = '--mut') => `<span class="tag" style="background:color-mix(in srgb,var(${c}) 16%,transparent);color:var(${c})">${t}</span>`;
+function stt(k, v) { if (v == null) return ''; const r = { hr: [60, 100], spo2: [95, 101], temp: [36.1, 37.5], sleep: [7, 9.5] }[k]; if (!r) return ''; return v < r[0] ? tag('Low', '--yel') : v > r[1] ? tag('High', '--red') : tag('Normal', '--green'); }
+function ring(d) {
+  const g = G(), c = (r, p) => { const L = 2 * Math.PI * r; return `stroke-dasharray="${L * Math.min(1, p)} ${L}"`; };
+  return `<svg width="190" height="190" viewBox="0 0 190 190" role="img" aria-label="Daily progress rings"><defs><linearGradient id="gr" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="var(--blue)"/><stop offset="1" stop-color="var(--green)"/></linearGradient></defs><g transform="rotate(-90 95 95)" fill="none" stroke-width="12" stroke-linecap="round"><circle cx="95" cy="95" r="82" stroke="var(--track)"/><circle cx="95" cy="95" r="82" stroke="url(#gr)" ${c(82, (d.steps || 0) / g.steps)}/><circle cx="95" cy="95" r="64" stroke="var(--track)"/><circle cx="95" cy="95" r="64" stroke="var(--blue)" ${c(64, (d.move || 0) / g.move)}/><circle cx="95" cy="95" r="46" stroke="var(--track)"/><circle cx="95" cy="95" r="46" stroke="var(--yel)" ${c(46, (d.pts || 0) / g.pts)}/></g><text x="95" y="92" text-anchor="middle" font-size="26" font-weight="600" fill="var(--fg)">${fmt(d.steps || 0)}</text><text x="95" y="110" text-anchor="middle" font-size="11" fill="var(--mut)">of ${fmt(g.steps)} steps</text></svg>`;
+}
+function bars(k) {
+  const d = D[k], m = M[k], p = d.filter(v => v != null), hi = Math.max(...p, 1) * 1.05, lo = k == 'wt' && p.length ? Math.min(...p) - 2 : m.lo, L = WL();
+  return `<svg viewBox="0 0 320 150" width="100%">${d.map((v, i) => { const h = v == null ? 0 : Math.max(3, (v - lo) / (hi - lo) * 100); return `<rect x="${i * 45 + 6}" y="${115 - h}" width="34" height="${Math.max(h, 3)}" rx="6" fill="${v == null ? 'var(--track)' : 'var(' + m.c + ')'}" opacity="${i == 6 ? 1 : .5}"/><text x="${i * 45 + 23}" y="136" text-anchor="middle" font-size="11" fill="var(--mut)">${L[i]}</text>${v == null ? '' : `<text x="${i * 45 + 23}" y="${110 - h}" text-anchor="middle" font-size="10" fill="var(--fg)">${v >= 1000 ? (v / 1000).toFixed(1) + 'k' : v}</text>`}`; }).join('')}</svg>`;
+}
+const mini = k => { const d = D[k], p = d.filter(v => v != null), hi = Math.max(...p, 1); return `<svg viewBox="0 0 70 40" width="100%" height="44" preserveAspectRatio="none">${d.map((v, i) => { const h = v == null ? 2 : Math.max(2, v / hi * 38); return `<rect x="${i * 10 + 1}" y="${40 - h}" width="7" height="${h}" rx="2" fill="${v == null ? 'var(--track)' : 'var(' + M[k].c + ')'}"/>`; }).join('')}</svg>`; };
+function tile(k, val, extra = '') { const m = M[k]; return `<div class="card" onclick="openDet('${k}')"><h2><span class="dot" style="background:var(${m.c})"></span>${m.n}</h2><div class="big">${val}</div>${extra}</div>`; }
+const V = (k, dec) => { const v = D[k][6]; return v == null ? '<span class="sub" style="font-size:15px">No data</span>' : (dec ? (+v).toFixed(1) : fmt(v)) + '<small>' + M[k].u + '</small>'; };
+const NODATA = '<span class="sub" style="font-size:15px">No data</span>';
+
+function connectCard() {
+  if (TR.on || BL.on) return `<div class="card" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><span class="dot" style="background:var(--green);width:12px;height:12px"></span><div class="grow" style="min-width:150px"><b>Connected</b><div class="sub">${[TR.on ? 'Phone: steps (keep screen on)' : '', BL.on ? esc(BL.name) + (live('hr', 15000) ? ' · ' + Math.round(live('hr', 15000)) + ' bpm' : '') : ''].filter(Boolean).join(' · ')}</div></div><button class="p sm" onclick="measure()">Scan vitals</button><button class="p sm o warn" onclick="disconnect()">Disconnect</button></div>`;
+  return `<div class="card tip"><h2 style="color:var(--blue)">Connect your devices</h2>Track steps with this phone, scan your heart rate with the camera, or pair a Bluetooth heart-rate band.${TR.err ? `<div class="warn" style="margin:6px 0">${esc(TR.err)}</div>` : ''}<div class="acts"><button class="p" onclick="trackOn()">Start step tracking</button><button class="p o" onclick="measure()">Scan heart rate</button><button class="p o" onclick="connectBLE()">Bluetooth device</button></div></div>`;
+}
+function home() {
+  const d = today(), g = G(), h = new Date().getHours(), gr = h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening';
+  const lastHr = live('hr', 15000) != null ? Math.round(live('hr', 15000)) : d.hr.length ? d.hr[d.hr.length - 1] : null;
+  const km = ((d.steps || 0) * U.profile.h * .415 / 1e5).toFixed(1), w = d.water || 0;
+  return `<div class="top"><div><h1>${gr}, ${esc(U.name.split(' ')[0])}</h1><div class="sub">${new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}</div></div><div class="av">${esc(U.name[0].toUpperCase())}</div></div>${(() => { const r = RD.res, st = RD.al ? ['ALERT', '--red'] : r && r.state == 'ready' ? (r.watching ? ['Watching', '--yel'] : ['Normal for you', '--green']) : ['Calibrating', '--yel']; return `<div class="rstat" onclick="go('browse')"><span class="pdot" style="background:var(${st[1]})"></span><b>Radar: ${st[0]}</b><span class="sub">${RD.live ? 'Live data' : 'Simulated stream'} · tap to open</span></div>`; })()}${monCard()}${installCard()}${connectCard()}
+<div class="cols"><div class="card hero"><h2>Daily progress</h2><div style="display:flex;justify-content:center">${ring(d)}</div><div class="chips"><div class="chip"><b>${fmt(D.cal[6] || 0)}</b>kcal</div><div class="chip"><b>${km}</b>km</div><div class="chip"><b>${d.move || 0}</b>active min</div></div></div>
+<div><div class="grid">${tile('hr', lastHr ? lastHr + '<small> bpm</small>' : NODATA, stt('hr', lastHr) + `<div style="margin-top:8px"><button class="p sm" onclick="event.stopPropagation();measure()">Measure</button></div>`)}${tile('spo2', V('spo2'), stt('spo2', D.spo2[6]) + '<div class="sub">Oximeter or typed</div>')}<div class="card" onclick="openDet('sleep')"><h2>Sleep</h2><div class="big">${V('sleep', 1)}</div>${mini('sleep')}</div><div class="card" onclick="go('journal')"><h2>Activity</h2><div class="big">${fmt(d.steps || 0)}<small> steps</small></div>${mini('steps')}</div></div>
+<div class="card"><h2>Water intake</h2><span class="big">${w}<small> / ${g.water} ml</small></span><div class="pbar"><i style="width:${Math.min(100, w / g.water * 100)}%;background:var(--blue)"></i></div><div class="acts"><button class="p" onclick="addWater(250)">+ 250 ml</button><button class="p o" onclick="addWater(-250)">− 250</button></div></div></div></div>
+<div class="card"><h2>Body profile</h2>${U.profile.h} cm · ${U.profile.w} kg · BMI <b>${bmi()}</b> (${bmiCat()})</div>`;
+}
+function addWater(n) { if (n > 0) drink(n); else undoDrink(); }
+const ser = (k, n) => Array.from({ length: n }, (_, i) => { const x = (U.days || {})[dk(n - 1 - i)]; return x && x[k] != null ? x[k] : null; });
+function hb(v, c) {
+  const n = v.length, p = v.filter(x => x != null), hi = Math.max(...p, 1) * 1.1, w = 320 / n;
+  return `<svg viewBox="0 0 320 112" width="100%">${v.map((x, i) => { const h = x == null ? 3 : Math.max(3, x / hi * 90); return `<rect x="${i * w + w * .15}" y="${95 - h}" width="${w * .7}" height="${h}" rx="${Math.min(5, w * .3)}" fill="${x == null ? 'var(--track)' : 'var(' + c + ')'}" opacity="${i == n - 1 ? 1 : .65}"/>`; }).join('')}<text x="0" y="109" font-size="10" fill="var(--mut)">${n} days ago</text><text x="320" y="109" text-anchor="end" font-size="10" fill="var(--mut)">today</text></svg>`;
+}
+const pb = (l, v, t, c) => `<div style="margin:12px 0"><div style="display:flex;justify-content:space-between"><span>${l}</span><span class="sub">${fmt(v)} / ${fmt(t)}</span></div><div class="pbar"><i style="width:${Math.min(100, v / t * 100)}%;background:var(${c})"></i></div></div>`;
+function journal() {
+  const d = today(), g = G(), n = S.rng == 30 ? 30 : 7, a = U.acts || [];
+  return `<div class="top"><h1>Activity</h1></div><div class="cols"><div><div class="card"><h2>Steps and daily goals</h2>${pb('Steps', d.steps || 0, g.steps, '--blue')}${pb('Active minutes', d.move || 0, g.move, '--green')}${pb('Heart points', d.pts || 0, g.pts, '--yel')}</div>
+<div class="card"><h2>Log an activity you did</h2><div class="f"><div><label class="sub">Type</label><select id="at">${Object.keys(K).map(t => `<option>${t}</option>`).join('')}</select></div><div><label class="sub">Minutes</label><input id="am" type="number" value="20" min="1" inputmode="numeric"></div><button class="p" onclick="addAct()">Add</button></div></div></div>
+<div><div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><h2 style="margin:0">History</h2><div class="seg"><button class="${n == 7 ? 'on' : ''}" onclick="S.rng=7;draw()">Week</button><button class="${n == 30 ? 'on' : ''}" onclick="S.rng=30;draw()">Month</button></div></div><div class="sub" style="margin-top:10px">Steps</div>${hb(ser('steps', n), '--blue')}<div class="sub">Active minutes</div>${hb(ser('move', n), '--green')}</div>
+<div class="card"><h2>Recent activity</h2>${a.length ? a.map(x => `<div class="row" style="cursor:default"><div class="grow"><b>${esc(x.t)}</b><div class="sub">${esc(x.at)}</div></div><div>${esc(x.m)} min</div></div>`).join('') : '<div class="sub">Nothing logged yet.</div>'}</div></div></div>`;
+}
+function addAct() { const t = $('#at').value, m = Math.max(1, +$('#am').value || 1), d = today(); U.acts = U.acts || []; U.acts.unshift({ t, m, at: new Date().toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) }); U.acts = U.acts.slice(0, 100); d.move = (d.move || 0) + m; d.pts = (d.pts || 0) + Math.round(m * (K[t] || 1)); save(); draw(); }
+
+function devCard() {
+  const row = (n, s, btn) => `<div class="row" style="cursor:default"><div class="grow"><b>${n}</b><div class="sub">${s}</div></div>${btn}</div>`, b = (t, f) => `<button class="p sm" onclick="${f}">${t}</button>`;
+  return `<div class="card"><h2>Devices</h2>${TR.err ? `<div class="warn" style="margin-bottom:6px">${esc(TR.err)}</div>` : ''}${row('This phone', 'Step counting (motion sensor) and camera heart rate', TR.on ? tag('On', '--green') : b('Start', 'trackOn()'))}${row('Bluetooth devices', BL.on ? esc(BL.name) : 'Heart-rate band, oximeter, thermometer, scale', BL.on ? tag('Connected', '--green') : b('Connect', 'connectBLE()'))}${row('Smartwatch / Health Connect', 'Needs a native Android wrapper (web apps cannot read it)', tag('Planned'))}${row('Google Fit / Apple Health', 'Cloud sync', tag('Planned'))}</div>`;
+}
+function radarCard() {
+  const ctxSeg = RD.live ? `<div style="margin-top:10px"><div class="sub" style="margin-bottom:4px">Activity context (so exercise is not mistaken for an emergency)</div><div class="seg" style="flex-wrap:wrap">${[['auto', 'Auto'], ['rest', 'Resting'], ['walk', 'Walking'], ['ex', 'Exercise']].map(([k, n]) => `<button class="${S.ctx == k ? 'on' : ''}" onclick="S.ctx='${k}';draw()">${n}</button>`).join('')}</div><div class="sub" id="rdCtxNote" style="margin-top:4px"></div></div>` : '';
+  const c = CT(), hasWA = !!(c.dp || '').replace(/\D/g, ''), hasMail = !!c.de;
+  return `<div class="card"><h2>Anomaly Radar <span id="rdMode"></span></h2>${RD.live ? '<div class="simbar live">LIVE: readings come from your connected sensors</div>' : '<div class="simbar">SIMULATED DATA: generated by a simulator, not a real person or device. Test events are injected on purpose.</div>'}<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span id="rdPill"></span><span class="sub" id="rdSub"></span></div>
+<div class="chips"><div class="chip"><b id="rdH">-</b>bpm</div><div class="chip"><b id="rdO">-</b>SpO₂ %</div><div class="chip"><b id="rdT">-</b>°C</div><div class="chip"><b id="rdS">-</b>score</div></div>${ctxSeg}
+<svg viewBox="0 0 100 30" width="100%" height="60" preserveAspectRatio="none" style="margin-top:8px"><line x1="0" x2="100" y1="${29 - Math.log10(26) / 3 * 28}" y2="${29 - Math.log10(26) / 3 * 28}" stroke="var(--yel)" stroke-dasharray="3 2" vector-effect="non-scaling-stroke"/><polyline id="rdL" fill="none" stroke="var(--blue)" stroke-width="2" vector-effect="non-scaling-stroke"/></svg>
+<div class="sub" style="margin-top:6px">Test events (injected on purpose to show detection)</div>
+<button class="p r wide" style="margin:6px 0 8px;padding:13px" onclick="rInj('emerg',60)">🚨 Emergency Health Spike</button><div class="acts" style="margin-top:0"><button class="p o" onclick="rInj('hyp',70)">Low-oxygen episode</button><button class="p o" onclick="rInj('work',100)">Workout (harmless)</button><button class="p o" id="rdBtn" onclick="rMode()"></button></div>
+<h2 style="margin-top:16px">Doctor / contact message</h2><pre id="rdMsg"></pre>
+<div class="acts"><button class="p sm" ${hasWA ? '' : 'disabled'} onclick="sendMsg('wa')">WhatsApp</button><button class="p sm" ${c.dp ? '' : 'disabled'} onclick="sendMsg('sms')">SMS</button><button class="p sm" ${hasMail ? '' : 'disabled'} onclick="sendMsg('mail')">Email</button><button class="p sm o" onclick="sendMsg('share')">Share…</button><button class="p sm o" onclick="sendMsg('copy')">Copy</button>${c.emg ? `<a class="p sm r" style="text-decoration:none" href="tel:${esc(c.emg.replace(/[^\d+]/g, ''))}">Call ${esc(c.emg)}</a>` : ''}</div>
+${(c.dp || c.de) ? '' : '<div class="sub" style="margin-top:6px">Add your doctor or emergency contact in Profile to enable sending.</div>'}
+<div class="acts"><button class="p sm o" onclick="enableNotif()">Enable alert notifications</button></div>
+<div class="disc">Health Radar is not a medical device and cannot diagnose anything. Messages open your own WhatsApp, SMS or email app and you tap send; nothing is sent automatically. In an emergency call your local emergency number.</div></div>`;
+}
+function browse() {
+  return `<div class="top"><h1>Health</h1><button class="p sm o" onclick="aboutScreen()">How it works</button></div>${wellCards()}<div class="cols"><div>${proofCard()}${radarCard()}</div><div>${evidenceCard()}<div class="card"><h2>Health measurements</h2>${Object.keys(M).map(k => `<div class="row" onclick="openDet('${k}')"><span class="dot" style="background:var(${M[k].c});width:14px;height:14px"></span><div class="grow">${M[k].n}</div>${stt(k, D[k][6])}<div class="sub" style="min-width:64px;text-align:right">${D[k][6] == null ? 'No data' : D[k][6] + M[k].u}</div></div>`).join('')}</div>${devCard()}</div></div>`;
+}
+function detail() {
+  const k = S.det, m = M[k], a = avg(k), v = a == null ? null : (k == 'wt' || k == 'sleep' ? a.toFixed(1) : Math.round(a)), t = D[k][6];
+  return `<button class="back" onclick="S.det=null;draw()">‹ Back</button><div class="top"><h1>${m.n}</h1></div><div class="card"><div class="big">${t == null ? 'No data' : t}<small>${t == null ? '' : m.u}</small></div><div class="sub">Today</div><div style="margin-top:12px">${bars(k)}</div></div>${k == 'hr' ? '<button class="p wide" style="margin-bottom:12px" onclick="measure()">Measure with camera</button>' : ''}${R[k] ? `<div class="card"><h2>Log a value</h2><div class="f2"><input id="lv" type="number" step="any" inputmode="decimal"><button class="p" onclick="logVal('${k}')">Save</button></div><div class="sub" style="margin-top:6px">${m.h}</div><div id="er" class="err"></div></div>` : ''}<div class="card tip">${v == null ? m.e : m.t.replace('{a}', v)}</div>`;
+}
+function logVal(k) {
+  const v = parseFloat($('#lv').value), [a, b] = R[k]; if (!(v >= a && v <= b)) return ($('#er').textContent = `Enter a value between ${a} and ${b}`);
+  const d = today(); if (k == 'hr') d.hr.push(v); else d[k] = v; if (k == 'wt') U.profile.w = v; save(); draw();
+}
+const setC = (k, v) => { CT()[k] = v.trim(); save(); if (k == 'dp' || k == 'de') draw(); };
+const setGoal = (k, v) => { G()[k] = Math.max(1, +v || 1); save(); };
+function profile() {
+  const g = G(), c = CT(), cap = CAP(), ck = (ok, t, why) => `<div class="ck"><b style="color:var(${ok ? '--green' : '--red'})">${ok ? '✓' : '✗'}</b><div>${t}${ok ? '' : `<div class="sub">${why}</div>`}</div></div>`;
+  const cf = (id, l, v, t = 'text', ph = '') => `<div class="fld"><label class="sub">${l}</label><input type="${t}" value="${esc(v)}" placeholder="${esc(ph)}" onchange="setC('${id}',this.value)"></div>`;
+  const rows = [['Sex', U.profile.s], ['Age', U.profile.a], ['Height', U.profile.h + ' cm'], ['Weight', U.profile.w + ' kg'], ['BMI', bmi() + ' (' + bmiCat() + ')']].map(([a, b]) => `<div class="row" style="cursor:default"><div class="grow">${a}</div>${esc(b)}</div>`).join('');
+  return `<div class="top"><h1>Profile</h1><div class="av">${esc(U.name[0].toUpperCase())}</div></div><div class="cols"><div>
+<div class="card"><h2>Body profile</h2>${rows}<div class="acts"><button class="p" onclick="S.stage='onboard';draw()">Edit</button><button class="p r" onclick="logout()">Log out</button></div></div>
+<div class="card"><h2>Doctor and emergency contacts</h2><div class="sub" style="margin-bottom:8px">Used by Anomaly Radar to prepare a message. Include the country code in phone numbers, e.g. +91 98765 43210.</div>${cf('dn', 'Doctor name', c.dn)}${cf('dp', 'Doctor phone (WhatsApp / SMS)', c.dp, 'tel', '+91...')}${cf('de', 'Doctor email', c.de, 'email')}${cf('en', 'Emergency contact name', c.en)}${cf('ep', 'Emergency contact phone', c.ep, 'tel', '+91...')}${cf('emg', 'Local emergency number', c.emg, 'tel')}</div>
+<div class="card"><h2>Daily goals</h2>${[['steps', 'Steps'], ['move', 'Move minutes'], ['pts', 'Heart points'], ['water', 'Water (ml)']].map(([k, n]) => `<div class="fld"><label class="sub">${n}</label><input type="number" inputmode="numeric" value="${g[k]}" min="1" onchange="setGoal('${k}',this.value)"></div>`).join('')}</div></div><div>
+<div class="card"><h2>This device</h2>${ck(cap.secure, 'Secure connection (https)', 'Camera, sensors and install need https. Host the app on an https site.')}${ck(cap.motion, 'Motion sensor (steps)', 'Not available in this browser or on this device.')}${ck(cap.cam, 'Camera (heart rate)', 'Needs https and camera permission.')}${ck(cap.ble, 'Bluetooth', isIOS() ? 'Safari on iPhone has no Web Bluetooth. Use Chrome on Android.' : 'Use Chrome or Edge on Android or desktop.')}${ck(cap.notif, 'Notifications', 'Not supported here. On iPhone, install to the home screen first.')}${ck(standalone(), 'Installed as an app', 'Use the install banner on Home, or your browser menu.')}<div class="acts"><button class="p o" onclick="shareQR()">Open on another phone (QR)</button></div></div>
+<div class="card"><h2>Your data</h2><div class="sub">Everything is stored only in this browser on this device. There is no server and no cloud copy, so clearing site data or losing the phone loses it. Export a backup now and then.</div><div class="acts"><button class="p" onclick="exportData()">Export my data</button><button class="p o warn" onclick="deleteData()">Delete all my data</button></div></div>
+<div class="card"><h2>About your data</h2><div class="sub">Steps come from the phone motion sensor while the app is open and the screen is on. Heart rate comes from the camera, a Bluetooth device or your own entries. Sleep, blood oxygen and weight are entered by you or a Bluetooth device. Not a medical device. Passwords are salted and hashed with PBKDF2 on this device only.</div></div></div></div>`;
+}
+const ICON = { home: 'M12 3 3 11h2v9h5v-6h4v6h5v-9h2z', journal: 'M5 3h12a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5zm3 4v2h8V7zm0 4v2h8v-2z', browse: 'M4 4h7v7H4zm9 0h7v7h-7zM4 13h7v7H4zm9 0h7v7h-7z', profile: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8m0 2c-4 0-8 2-8 5v1h16v-1c0-3-4-5-8-5' };
+const TABS = [['home', 'Home'], ['journal', 'Activity'], ['browse', 'Health'], ['profile', 'Profile']];
+function draw() {
+  $('nav').style.display = S.stage == 'app' ? '' : 'none';
+  if (S.stage != 'app') { $('#app').innerHTML = '<div class="narrow">' + AUTH[S.stage]() + '</div>'; return; }
+  rebuild();
+  $('#app').innerHTML = S.det ? detail() : { home, journal, browse, profile }[S.tab]();
+  $('#nav').innerHTML = TABS.map(([k, n]) => `<button class="${S.tab == k && !S.det ? 'on' : ''}" onclick="go('${k}')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="${ICON[k]}"/></svg>${n}</button>`).join('');
+  rdUI(); if (U && U.sleepAt && !document.getElementById('slp')) sleepScreen();
+}
+const go = t => { S.tab = t; S.det = null; draw(); scrollTo(0, 0); }, openDet = k => { S.det = k; draw(); scrollTo(0, 0); };
+
+// ---------- data export / delete ----------
+function exportData() {
+  const o = { exportedAt: new Date().toISOString(), name: U.name, email: U.e, profile: U.profile, goal: U.goal, contacts: U.contacts, days: U.days, activities: U.acts };
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(o, null, 2)], { type: 'application/json' })); a.download = 'health-radar-' + dk(0) + '.json'; document.body.appendChild(a); a.click(); a.remove(); toast('Backup downloaded');
+}
+function deleteData() {
+  if (!confirm('Delete your account and all health data from this device? This cannot be undone.')) return;
+  DB.accounts = DB.accounts.filter(a => a !== U); DB.cur = null; save(); disconnect(); logout(); toast('All your data was deleted from this device.');
+}
+
+// ---------- accounts and onboarding ----------
+const fld = (id, l, t = 'text', v = '', x = '') => `<div class="fld"><label class="sub" for="${id}">${l}</label><input id="${id}" type="${t}" value="${esc(v)}" ${x}></div>`;
+const err = m => { const e = $('#er'); if (e) e.textContent = m; };
+const AUTH = {
+  welcome: () => `<div style="text-align:center;padding:50px 10px 20px"><div class="av" style="width:84px;height:84px;font-size:40px;margin:0 auto 18px;background:var(--red);color:#fff">♥</div><h1 style="font-size:30px;font-weight:500;margin:0 0 6px">Health Radar</h1><div class="sub" style="margin-bottom:34px">Track your activity, heart rate, sleep and more, with an anomaly radar that learns what is normal for you.</div><button class="p wide" style="padding:14px;margin-bottom:10px" onclick="S.stage='signup';draw()">Sign up</button><button class="p o wide" style="padding:14px;margin-bottom:10px" onclick="S.stage='login';draw()">Log in</button><button class="p o wide" style="padding:14px" onclick="startDemo()">Try the demo with sample data</button><div class="sub" style="margin-top:18px">Your data stays on this device. Not a medical device.</div></div>`,
+  signup: () => `<button class="back" onclick="S.stage='welcome';draw()">‹ Back</button><div class="top"><h1>Create account</h1></div><div class="card">${fld('n', 'Full name', 'text', '', 'autocomplete="name"')}${fld('e', 'Email', 'email', '', 'autocomplete="email"')}${fld('p', 'Password (6+ characters)', 'password', '', 'autocomplete="new-password"')}<div id="er" class="err"></div><button class="p wide" onclick="doSignup()">Sign up</button></div><div class="sub" style="text-align:center">Already have an account? <a href="#" onclick="S.stage='login';draw();return false" style="color:var(--blue)">Log in</a></div><div class="sub" style="text-align:center;margin-top:8px">This account lives only in this browser. There is no password reset.</div>`,
+  login: () => `<button class="back" onclick="S.stage='welcome';draw()">‹ Back</button><div class="top"><h1>Log in</h1></div><div class="card">${fld('e', 'Email', 'email', '', 'autocomplete="email"')}${fld('p', 'Password', 'password', '', 'autocomplete="current-password"')}<div id="er" class="err"></div><button class="p wide" onclick="doLogin()">Log in</button></div><div class="sub" style="text-align:center">New here? <a href="#" onclick="S.stage='signup';draw();return false" style="color:var(--blue)">Sign up</a></div>`,
+  onboard: () => { const p = U.profile || {}; return `<div class="top"><div><h1>Tell us about you</h1><div class="sub">This personalises your dashboard.</div></div></div><div class="card"><label class="sub">Sex</label><select id="sx" style="margin-bottom:10px">${['Female', 'Male', 'Other'].map(o => `<option ${p.s == o ? 'selected' : ''}>${o}</option>`).join('')}</select>${fld('ag', 'Age (years)', 'number', p.a || '', 'inputmode="numeric"')}${fld('ht', 'Height (cm)', 'number', p.h || '', 'inputmode="decimal" oninput="updBmi()"')}${fld('wt', 'Weight (kg)', 'number', p.w || '', 'inputmode="decimal" oninput="updBmi()"')}<div id="bm" class="sub" style="min-height:20px"></div><div id="er" class="err"></div><button class="p wide" onclick="doOnboard()">Continue to dashboard</button></div>`; }
+};
+function updBmi() { const h = +$('#ht').value, w = +$('#wt').value; $('#bm').textContent = h > 0 && w > 0 ? 'BMI: ' + (w / ((h / 100) ** 2)).toFixed(1) : ''; }
+function enter(a) {
+  U = a; U.days = U.days || {}; U.acts = U.acts || []; G(); CT(); DB.cur = U.e; save();
+  S.stage = U.profile ? 'app' : 'onboard'; S.tab = 'home'; S.det = null; rInit(false); draw();
+}
+async function doSignup() {
+  const name = $('#n').value.trim(), e = $('#e').value.trim().toLowerCase(), p = $('#p').value;
+  if (!name) return err('Enter your name'); if (!/.+@.+\..+/.test(e)) return err('Enter a valid email'); if (p.length < 6) return err('Password must be at least 6 characters');
+  if (DB.accounts.find(a => a.e == e)) return err('Account already exists. Please log in.');
+  const salt = newSalt(), a = { name, e, salt, h: await hashPw(p, salt), profile: null, days: {}, acts: [] }; DB.accounts.push(a); enter(a);
+}
+async function doLogin() {
+  const e = $('#e').value.trim().toLowerCase(), p = $('#p').value, a = DB.accounts.find(x => x.e == e && !x.demo);
+  if (!a) return err('Incorrect email or password');
+  if (a.legacy != null) { if (weak(p) !== a.legacy) return err('Incorrect email or password'); a.salt = newSalt(); a.h = await hashPw(p, a.salt); delete a.legacy; }
+  else if (await hashPw(p, a.salt) !== a.h) return err('Incorrect email or password');
+  enter(a);
+}
+function doOnboard() {
+  const a = +$('#ag').value, h = +$('#ht').value, w = +$('#wt').value;
+  if (!(a >= 5 && a <= 120)) return err('Enter a valid age'); if (!(h >= 100 && h <= 250)) return err('Height should be 100 to 250 cm'); if (!(w >= 20 && w <= 300)) return err('Weight should be 20 to 300 kg');
+  U.profile = { s: $('#sx').value, a, h, w }; const d = today(); if (d.wt == null) d.wt = w; save(); S.stage = 'app'; S.tab = 'home'; draw(); scrollTo(0, 0);
+}
+function logout() { trackOff(); U = null; DB.cur = null; save(); rStop(); S.stage = 'welcome'; S.tab = 'home'; S.det = null; const b = $('#rb'); b && b.remove(); ovx(); draw(); }
+function startDemo() {
+  let a = DB.accounts.find(x => x.demo);
+  if (!a) {
+    let s = 20261011; const rnd = () => { s |= 0; s = s + 0x6D2B79F5 | 0; let t = Math.imul(s ^ s >>> 15, 1 | s); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+    const r = (lo, hi) => lo + rnd() * (hi - lo);
+    a = { name: 'Demo User', e: 'demo@local', demo: true, profile: { s: 'Female', a: 28, h: 165, w: 58 }, days: {}, acts: [{ t: 'Walk', m: 35, at: 'Yesterday' }, { t: 'Yoga', m: 25, at: '2 days ago' }] };
+    for (let o = 6; o >= 0; o--) a.days[dk(o)] = o ? { steps: Math.round(r(4500, 12500)), move: Math.round(r(12, 50)), pts: Math.round(r(10, 45)), hr: [0, 1, 2, 3].map(() => Math.round(r(60, 78))), sleep: +r(5.6, 8.4).toFixed(1), spo2: Math.round(r(95, 99)), wt: +r(57.6, 58.6).toFixed(1), water: Math.round(r(1400, 2800) / 250) * 250 } : { steps: 3200, move: 12, pts: 9, hr: [68], sleep: 7.2, spo2: 97, wt: 58, water: 750 };
+    DB.accounts.push(a);
+  }
+  enter(a);
+}
+
+// ---------- Anomaly Radar glue ----------
+const RD = { live: false, eng: null, sim: null, timer: null, al: null, msg: '', inj: 0, injected: false, ev: null, cur: { hr: 62, sp: 97.6, tp: 33.2 }, hist: [], res: null, liveSave: 0, audio: null };
+function rStop() { clearInterval(RD.timer); RD.timer = null; }
+function rInit(l) {
+  rStop(); RD.live = l; RD.hist = []; RD.res = null; RD.ev = null; RD.al = null; RD.sim = null;
+  if (!l) { RD.sim = new Radar.Sim(); RD.eng = new Radar.Engine({ minRows: 225 }); for (let i = 0; i < 500; i++) RD.eng.push(RD.sim.step()); RD.eng.ack(); RD.sim.s.ev = null; }
+  else { RD.eng = new Radar.Engine({ minRows: 180, live: true }); if (U && U.baseline) RD.eng.load(U.baseline); }
+  RD.timer = setInterval(tickR, l ? 1000 : 400);
+}
+const CTXV = { rest: 3, walk: 30, ex: 80 };
+function liveSample() {
+  const hr = live('hr', 15000); if (hr == null) return null;
+  let act, auto = S.ctx == 'auto';
+  if (auto) act = TR.on && performance.now() - TR.lastEv < 3000 ? TR.act : 3; else act = CTXV[S.ctx];
+  let sp = live('sp', 90000), tp = live('tp', 900000);
+  const e = RD.ev;
+  if (e) {
+    const r = 1 - Math.pow(.45, ++e.t); let h = hr;
+    if (e.k == 'emerg') { h = hr + (160 - hr) * r; act *= 1 - r; } else if (e.k == 'hyp') { h = hr + 25 * r; if (sp != null) sp -= 13.6 * r; act *= 1 - r; } else if (e.k == 'work') { act = 85; }
+    if (--e.left <= 0) RD.ev = null; return { act, hr: h, sp, tp, noCtx: auto && !(TR.on && performance.now() - TR.lastEv < 3000) };
+  }
+  return { act, hr, sp, tp, noCtx: auto && !(TR.on && performance.now() - TR.lastEv < 3000) };
+}
+function rInj(k, n) {
+  if (!U) return; rAck();
+  if (RD.live) {
+    if (!(BL.on && live('hr', 15000) != null)) return rdUI('Connect a Bluetooth heart-rate band first, or switch back to the demo stream.');
+    if (k == 'hyp' && live('sp', 90000) == null) return rdUI('The low-oxygen test needs a connected Bluetooth oximeter.');
+    RD.ev = { k, left: n, t: 0 };
+  } else RD.sim.inject(k, n);
+  RD.injected = k != 'work'; if (k != 'work') RD.inj = performance.now();
+}
+function rMode() {
+  if (!RD.live) { if (!(BL.on && live('hr', 15000) != null)) { rdUI(CAP().ble ? 'Connect a Bluetooth heart-rate band first (Devices card).' : 'Live mode needs a Bluetooth heart-rate band, which this browser cannot connect to. Use Chrome on Android.'); return; } rInit(true); }
+  else rInit(false);
+  rAck(); draw();
+}
+function rAck() { RD.al = null; if (RD.eng) RD.eng.ack(); const b = document.getElementById('rb'); b && b.remove(); }
+function tickR() {
+  if (S.stage != 'app' || !U) return;
+  let s, frozen;
+  if (RD.live) { s = liveSample(); if (!s) { rdUI('Waiting for heart-rate data from your Bluetooth band…'); return; } frozen = !!RD.ev; RD.noCtx = s.noCtx; }
+  else { s = RD.sim.step(); frozen = !!RD.sim.s.ev; }
+  RD.cur = { hr: s.hr, sp: s.sp, tp: s.tp };
+  const r = RD.eng.push(s, { freeze: frozen }); RD.res = r;
+  if (r.state == 'ready') { RD.hist.push(r.score); if (RD.hist.length > 100) RD.hist.shift(); }
+  if (r.fire) rFire(r, s);
+  if (RD.live && ++RD.liveSave % 30 == 0) { U.baseline = RD.eng.toJSON(); save(); }
+  rdUI();
+  const bt = document.getElementById('rbT'); if (bt && RD.al) { const left = 30 - Math.floor((Date.now() - RD.alAt) / 1000); bt.textContent = left > 0 ? 'Are you OK? Tap "I\'m OK" to cancel. Escalation prompt in ' + left + ' s.' : 'No answer: open the message and send it to your doctor or contact now.'; }
+}
+function rOk() {
+  const a = U.alerts && U.alerts[0]; if (a) a.v = 'false alarm (marked by user)';
+  if (RD.live && !RD.injected && RD.lastRow) { for (let i = 0; i < 8; i++) RD.eng.add(RD.lastRow.row); RD.eng.doFit(RD.lastRow.mask); toast('Marked as false alarm. This reading is now treated as more normal for you.', 3500); }
+  else toast('Marked as false alarm.');
+  rAck(); save(); draw();
+}
+function buildMsg(r, s) {
+  const c = CT(), crit = r.crit, inj = RD.injected;
+  const lines = r.findings.map(f => `  - ${f.name}: ${f.value.toFixed(f.dec)} ${f.unit} (expected ${f.exp.toFixed(f.dec)}; ${f.z > 0 ? '+' : ''}${f.z.toFixed(1)} SD)`).join('\n');
+  return `TO: ${c.dn || 'Doctor / emergency contact (set in Profile)'}\nFROM: Health Radar automated alert for ${U.name}\nSUBJECT: ${crit ? 'URGENT' : 'Warning'} - unusual vitals\nTIME: ${new Date().toLocaleString()}\n${inj ? '\n*** TEST EVENT: these values were injected for a demonstration ***\n' : ''}${RD.live ? '' : '\n*** DEMO DATA: simulated stream, not a real person ***\n'}\nSeverity: ${crit ? 'CRITICAL' : 'WARNING'}\nPattern: ${r.pattern}\n\nFindings vs this person's own baseline:\n${lines}\n  - Activity: ${s.act.toFixed(0)}/100 (${s.act < 8 ? 'at rest' : 'moving'})\n\nAnomaly score ${r.score.toFixed(0)}, confirmed over consecutive readings.${RD.inj && inj ? `\nDetected ${((performance.now() - RD.inj) / 1000).toFixed(1)} s after the event began.` : ''}\n\nSuggested action: contact the person now${crit ? '; if unreachable, consider emergency services' : ''}.\nThis is an automated, non-diagnostic alert from a consumer app.`;
+}
+function sound() {
+  try { const a = RD.audio || (RD.audio = new (window.AudioContext || window.webkitAudioContext)()); if (a.state == 'suspended') a.resume(); [0, .25, .5].forEach(t => { const o = a.createOscillator(), g = a.createGain(); o.frequency.value = 880; g.gain.value = .08; o.connect(g); g.connect(a.destination); o.start(a.currentTime + t); o.stop(a.currentTime + t + .15); }); } catch (e) { }
+}
+document.addEventListener('pointerdown', () => { try { if (!RD.audio) RD.audio = new (window.AudioContext || window.webkitAudioContext)(); RD.audio.state == 'suspended' && RD.audio.resume(); } catch (e) { } }, { once: true });
+function rFire(r, s) {
+  RD.al = { crit: r.crit }; RD.msg = buildMsg(r, s); RD.alAt = Date.now(); RD.lastRow = { row: [RD.eng.ctx, s.hr, s.sp == null ? null : s.sp, s.tp == null ? null : s.tp], mask: r.mask };
+  U.alerts = U.alerts || []; U.alerts.unshift({ at: new Date().toLocaleString(), pattern: r.pattern, crit: r.crit, test: !!RD.injected || !RD.live, v: 'no response' }); U.alerts.length = Math.min(U.alerts.length, 30); save();
+  const lat = RD.injected && RD.inj ? ((performance.now() - RD.inj) / 1000).toFixed(1) : null; RD.inj = 0;
+  let b = document.getElementById('rb'); if (!b) { b = document.createElement('div'); b.id = 'rb'; b.className = 'rbn'; b.setAttribute('role', 'alert'); document.body.appendChild(b); }
+  b.innerHTML = `<div><b>⚠ ${RD.injected ? 'TEST: ' : ''}SERIOUS HEALTH ANOMALY</b><div>${esc(r.pattern)}</div><div style="opacity:.9;font-size:13px">${lat ? 'Detected in ' + lat + ' s · ' : ''}Message ready to send to your doctor</div></div><div id="rbT" style="width:100%;order:3;font-size:13px"></div><button class="p" onclick="rOk()">I'm OK</button><button class="p" onclick="go('browse');rAck()">Open message</button>`;
+  sound(); try { navigator.vibrate && navigator.vibrate([200, 100, 200, 100, 400]); } catch (e) { }
+  if ('Notification' in window && Notification.permission == 'granted' && navigator.serviceWorker) navigator.serviceWorker.ready.then(reg => reg.showNotification((RD.injected ? 'TEST: ' : '') + 'Health Radar alert', { body: r.pattern, tag: 'radar-alert', requireInteraction: true, vibrate: [200, 100, 200, 100, 400], icon: 'icons/icon-192.png' })).catch(() => { });
+  if (S.tab == 'browse') draw();
+}
+async function enableNotif() {
+  if (!('Notification' in window)) return toast(isIOS() ? 'On iPhone, install the app to the home screen first, then enable notifications.' : 'Notifications are not supported in this browser.', 4000);
+  const p = await Notification.requestPermission(); toast(p == 'granted' ? 'Alert notifications enabled' : 'Notifications are blocked. Change this in browser settings.');
+}
+function sendMsg(how) {
+  const c = CT(), m = RD.msg || 'Health Radar test message from ' + U.name + '.', body = encodeURIComponent(m), subj = encodeURIComponent('Health Radar alert - ' + U.name);
+  const open = u => { const a = document.createElement('a'); a.href = u; a.target = '_blank'; a.rel = 'noopener'; document.body.appendChild(a); a.click(); a.remove(); };
+  if (how == 'wa') open('https://wa.me/' + (c.dp || '').replace(/\D/g, '') + '?text=' + body);
+  else if (how == 'sms') open('sms:' + (c.dp || '').replace(/[^\d+]/g, '') + (isIOS() ? '&' : '?') + 'body=' + body);
+  else if (how == 'mail') open('mailto:' + encodeURIComponent(c.de) + '?subject=' + subj + '&body=' + body);
+  else if (how == 'share') { if (navigator.share) navigator.share({ title: 'Health Radar alert', text: m }).catch(() => { }); else sendMsg('copy'); }
+  else { try { navigator.clipboard.writeText(m).then(() => toast('Message copied')); } catch (e) { toast('Could not copy'); } }
+}
+function rdUI(note) {
+  const q = id => document.getElementById(id); if (!q('rdPill') || !RD.eng) return;
+  const r = RD.res, cal = r && r.state == 'calibrating';
+  q('rdMode').innerHTML = tag(RD.live ? 'Live data' : 'Demo stream', RD.live ? '--green' : '--yel');
+  q('rdBtn').textContent = RD.live ? 'Back to demo' : 'Use my live data';
+  const st = RD.al ? ['ALERT', '--red'] : cal ? ['Calibrating ' + Math.round(r.progress * 100) + '%', '--yel'] : r && r.watching ? ['Watching', '--yel'] : ['Normal for you', '--green'];
+  q('rdPill').innerHTML = tag(st[0], st[1]);
+  let sub = note || (RD.live ? (r && r.mask && r.mask.length < 3 ? 'Using ' + ['heart rate', 'blood oxygen', 'temperature'].filter((_, i) => r.mask.includes(i)).join(' + ') + ' only (no other live sensors). Learning from your own readings.' : 'Learning from your own readings') : 'Simulated stream with an instant baseline. Connect a Bluetooth heart-rate band for live data.');
+  q('rdSub').textContent = sub;
+  const n = q('rdCtxNote'); if (n) n.textContent = S.ctx == 'auto' ? (RD.noCtx ? 'No phone motion: assuming you are resting. Start step tracking or pick a context.' : 'Using phone motion as activity.') : 'Fixed context chosen by you.';
+  const c = RD.cur;
+  q('rdH').textContent = Math.round(c.hr); q('rdO').textContent = c.sp == null ? '—' : c.sp.toFixed(1); q('rdT').textContent = c.tp == null ? '—' : c.tp.toFixed(1);
+  q('rdS').textContent = r && r.state == 'ready' ? r.score.toFixed(1) : '-';
+  q('rdL').setAttribute('points', RD.hist.map((d, i) => `${i / 99 * 100},${29 - Math.min(1, Math.log10(1 + d) / 3) * 28}`).join(' '));
+  q('rdMsg').textContent = RD.msg || 'No alert yet. A message is prepared automatically when a serious anomaly is confirmed.';
+}
+
+// ---------- Daily health: blood oxygen, sleep mode, hydration, about ----------
+const hm = ms => { const m = Math.max(0, Math.round(ms / 60000)); return m < 60 ? m + ' min' : Math.floor(m / 60) + ' h ' + (m % 60) + ' min'; };
+const clk = t => new Date(t).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+function spoStatus(v) { return v >= 95 ? ['Normal', '--green', 'In the usual healthy range (95 to 100%).'] : v >= 92 ? ['Slightly low', '--yel', 'Rest for 5 minutes, warm your hands and measure again.'] : v >= 90 ? ['Low', '--red', 'Recheck after resting. If it stays below 92% or you feel breathless, contact a doctor.'] : ['Very low', '--red', 'Below 90% can be serious. Recheck now and seek urgent medical care if it stays low or you have trouble breathing.']; }
+function addSpo(v) { v = parseFloat(v); if (!(v >= 70 && v <= 100)) return toast('Enter a value between 70 and 100'); today().spo2 = v; U.spo2log = U.spo2log || []; U.spo2log.unshift({ t: Date.now(), v }); U.spo2log.length = Math.min(U.spo2log.length, 20); save(); draw(); toast('Blood oxygen saved'); }
+function drink(n) { if (!(n > 0)) return toast('Enter an amount in ml'); const d = today(); d.water = (d.water || 0) + n; d.wlog = d.wlog || []; d.wlog.push({ t: Date.now(), ml: n }); save(); draw(); }
+function undoDrink() { const d = today(), l = (d.wlog || []).pop(); if (!l && !(d.water > 0)) return toast('Nothing to undo'); d.water = Math.max(0, (d.water || 0) - (l ? l.ml : 250)); save(); draw(); }
+// ---------- continuous monitoring ----------
+async function monStart() {
+  if (!U) return; MON.on = true; MON.since = Date.now(); MON.n = 0; MON.gaps = 0;
+  if (CAP().motion && !TR.on) await trackOn();
+  wake();
+  if (BL.on && live('hr', 15000) != null && !RD.live) { rInit(true); rAck(); }
+  toast(RD.live ? 'Monitoring continuously with your live data' : 'Monitoring on. Using the simulated stream until a band connects.', 3500); draw();
+}
+function monStop() { MON.on = false; if (TR.on) trackOff(); try { TR.wl && TR.wl.release(); } catch (e) { } TR.wl = null; draw(); }
+setInterval(() => {
+  if (!MON.on || !U || S.stage != 'app') return;
+  if (!RD.live && BL.on && live('hr', 15000) != null) { rInit(true); rAck(); toast('Band detected: switched to live data', 3500); draw(); }
+}, 5000);
+function monAge() {
+  const e = document.getElementById('monAge'); if (!e) return;
+  const hr = live('hr', 15000), a = MON.lastHr ? Math.round((Date.now() - MON.lastHr) / 1000) : null;
+  e.textContent = (MON.on ? 'Monitoring for ' + hm(Date.now() - MON.since) + '. ' : '') + (RD.live ? (hr != null ? 'Last heart-rate sample ' + a + ' s ago.' : 'No heart-rate signal' + (BL.retry ? ', reconnecting (try ' + BL.retry + ')…' : '.')) : 'Simulated readings, one every 0.4 s.') + (MON.gaps ? ' Signal gaps: ' + MON.gaps + '.' : '');
+}
+setInterval(monAge, 1000);
+function monCard() {
+  const on = MON.on, hr = live('hr', 15000) != null, sp = live('sp', 90000) != null;
+  const li = (n, c, t) => `<li>${n}: <b class="${c}">${t}</b></li>`;
+  return `<div class="card ev"><h2><span class="pdot" style="background:var(${on ? '--green' : '--yel'})"></span>Continuous monitoring ${tag(on ? 'On' : 'Off', on ? '--green' : '--yel')}</h2>
+<ul>${li('Heart rate', RD.live && hr ? 'g' : on ? 'y' : 'r', RD.live && hr ? 'live from band, every second' : BL.retry ? 'reconnecting…' : on ? 'simulated stream' : 'off')}${li('Blood oxygen', sp ? 'g' : 'y', sp ? 'live from oximeter, saved every 5 min' : 'needs a Bluetooth oximeter')}${li('Movement and steps', TR.on ? 'g' : 'y', TR.on ? 'phone motion, used as activity context' : 'off')}${li('Sleep', 'y', 'start sleep mode; with a band it records overnight heart rate and lowest SpO₂')}${li('Hydration', 'y', 'manual log with reminders (cannot be sensed)')}</ul>
+<div class="sub" id="monAge"></div>
+<div class="acts"><button class="p ${on ? 'o' : ''}" onclick="${on ? 'monStop()' : 'monStart()'}">${on ? 'Stop monitoring' : 'Start continuous monitoring'}</button></div>
+<div class="sub" style="margin-top:6px">While on, the screen stays awake and a lost band reconnects automatically. A web page cannot keep sensing when the app is in the background or the phone is locked; a smartwatch or Health Connect sync would remove that limit.</div></div>`;
+}
+
+function startSleep() { U.sleepAt = Date.now(); U.sleepAcc = null; save(); wake(); draw(); }
+function sleepScreen() {
+  let o = document.getElementById('slp'); if (!o) { o = document.createElement('div'); o.id = 'slp'; document.body.appendChild(o); }
+  o.innerHTML = '<div><div id="slClock" class="mono"></div><div class="sub" style="margin-top:6px">Sleep mode is on. Rest well.</div><div class="sub" id="slDur"></div></div><div class="acts" style="justify-content:center"><button class="p" onclick="wakeUp()">I am awake</button><button class="p o" onclick="cancelSleep()">Cancel, do not log</button></div><div class="sub" style="max-width:300px">Health alerts still appear on top of this screen.</div>';
+  tickSleep();
+}
+function tickSleep() {
+  const o = document.getElementById('slp'); if (o && (!U || !U.sleepAt)) { o.remove(); return; }
+  const c = document.getElementById('slClock'); if (!c) return; c.textContent = clk(Date.now());
+  const d = document.getElementById('slDur'); if (d && U && U.sleepAt) d.textContent = 'Asleep for ' + hm(Date.now() - U.sleepAt);
+}
+setInterval(tickSleep, 15000);
+function wakeUp() {
+  if (!U || !U.sleepAt) return; const hrs = (Date.now() - U.sleepAt) / 3.6e6; U.sleepAt = null;
+  const o = document.getElementById('slp'); o && o.remove();
+  const a = U.sleepAcc; U.sleepAcc = null; if (!MON.on && !TR.on) { try { TR.wl && TR.wl.release(); } catch (e) { } TR.wl = null; }
+  if (hrs < 0.5) toast('Under 30 minutes, so it was not logged.', 3500); else { const d = today(); d.sleep = Math.min(24, +hrs.toFixed(1)); let x = ''; if (a && a.hn > 20) { d.sleepHr = Math.round(a.hs / a.hn); x += ', average heart rate ' + d.sleepHr + ' bpm'; } if (a && a.sm != null) { d.sleepSpo = a.sm; x += ', lowest SpO₂ ' + a.sm + '%'; } toast('Logged ' + hrs.toFixed(1) + ' h of sleep' + x, 5000); }
+  save(); draw();
+}
+function cancelSleep() { if (U) { U.sleepAt = null; U.sleepAcc = null; } const o = document.getElementById('slp'); o && o.remove(); save(); draw(); }
+let lastNudge = 0;
+setInterval(() => {
+  if (!U || S.stage != 'app' || document.visibilityState != 'visible' || U.sleepAt) return;
+  const d = today(), h = new Date().getHours(), l = d.wlog && d.wlog.length ? d.wlog[d.wlog.length - 1].t : 0;
+  if (h < 8 || h > 21 || (d.water || 0) >= G().water) return;
+  if (Date.now() - Math.max(l, lastNudge) > 2 * 3600e3 && (l || h >= 10)) { lastNudge = Date.now(); toast('Time for a glass of water', 4000); }
+}, 60000);
+function wellCards() {
+  const d = today(), g = G(), sp = d.spo2, lv = live('sp', 90000), ss = sp != null ? spoStatus(sp) : null;
+  const rl = (U.spo2log || []).slice(0, 3).map(x => `<div class="sub">${x.v}% at ${clk(x.t)}</div>`).join('');
+  const o2 = `<div class="card"><h2><span class="dot" style="background:var(--blue)"></span>Blood oxygen</h2><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><div class="big">${sp == null ? '<span class="sub" style="font-size:15px">No reading today</span>' : sp + '<small>%</small>'}</div>${ss ? tag(ss[0], ss[1]) : ''}</div>${ss ? `<div class="sub" style="margin:6px 0">${ss[2]}</div>` : ''}${mini('spo2')}<div class="f2" style="margin-top:10px"><input id="o2v" type="number" step="0.1" inputmode="decimal" placeholder="SpO₂ %"><button class="p" onclick="addSpo($('#o2v').value)">Save</button></div>${lv != null ? `<div class="acts"><button class="p sm o" onclick="addSpo(${lv.toFixed(1)})">Save live oximeter reading (${lv.toFixed(1)}%)</button></div>` : ''}<div style="margin-top:8px">${rl}</div><div class="disc">Phone cameras cannot measure blood oxygen reliably. Type a reading from a pulse oximeter or connect one over Bluetooth. This is not a diagnosis.</div></div>`;
+  const on = U.sleepAt, sl = D.sleep[6], sa = avg('sleep');
+  const slp = `<div class="card"><h2><span class="dot" style="background:var(--yel)"></span>Sleep mode</h2>${on ? `<div class="big">${hm(Date.now() - on)}</div><div class="sub">Asleep since ${clk(on)}</div><div class="acts"><button class="p" onclick="wakeUp()">I am awake</button><button class="p o" onclick="sleepScreen()">Open sleep screen</button></div>` : `<div class="big">${sl == null ? '<span class="sub" style="font-size:15px">Not logged today</span>' : sl.toFixed(1) + '<small> h last night</small>'}</div>${sl != null ? `<div class="sub">${sl >= 7 ? 'Meets the 7 to 9 hour guide.' : (7 - sl).toFixed(1) + ' h under the 7 hour guide.'}</div>` : ''}${mini('sleep')}<div class="sub" style="margin:6px 0">${sa == null ? '' : '7-day average ' + sa.toFixed(1) + ' h. '}Tap start when you go to bed and I am awake when you get up.</div><div class="acts"><button class="p wide" onclick="startSleep()">Start sleep mode</button></div><div class="acts"><button class="p sm o" onclick="openDet('sleep')">Log hours manually</button></div>`}</div>`;
+  const w = d.water || 0, goal = g.water, hr = new Date().getHours(), exp = Math.round(goal * Math.min(1, Math.max(0, (hr - 7) / 15)) / 50) * 50, wl = d.wlog || [], last = wl.length ? wl[wl.length - 1].t : null;
+  const pace = w >= goal ? 'Goal reached today.' : w >= exp ? 'On pace for the day.' : (exp - w) + ' ml behind the usual pace.';
+  const hyd = `<div class="card"><h2><span class="dot" style="background:var(--blue)"></span>Hydration</h2><div class="big">${w}<small> / ${goal} ml</small></div><div class="pbar"><i style="width:${Math.min(100, w / goal * 100)}%;background:var(--blue)"></i></div><div class="sub" style="margin-top:6px">${pace}${last ? ' Last drink ' + hm(Date.now() - last) + ' ago.' : ''}</div><div class="qk"><button class="p sm" onclick="drink(150)">+150</button><button class="p sm" onclick="drink(250)">+250</button><button class="p sm" onclick="drink(500)">+500</button></div><div class="f2"><input id="wv" type="number" inputmode="numeric" placeholder="Custom ml"><button class="p o" onclick="drink(Math.round(+$('#wv').value))">Add</button></div><div class="acts"><button class="p sm o" onclick="undoDrink()">Undo last</button></div><div class="fld" style="margin-top:10px"><label class="sub">Daily goal (ml)</label><input type="number" inputmode="numeric" value="${goal}" onchange="setGoal('water',this.value);draw()"></div><div class="sub">A reminder appears while the app is open and you are behind.</div></div>`;
+  return `<div class="cols">${o2}${slp}${hyd}</div>`;
+}
+function aboutScreen() {
+  ov(`<button class="back" onclick="ovx()">‹ Close</button><div style="text-align:center;margin-bottom:12px"><h1 style="margin:0">Health Radar</h1><div class="sub">Know what is normal for you</div></div>
+<div class="card ev"><h2>The idea</h2><div class="sub">A heart rate of 150 can be a workout or an emergency. Health Radar learns how your own vitals move with your activity, then flags readings that are unusual for you right now, instead of using one fixed number for everyone.</div></div>
+<div class="card ev"><h2>How it works</h2><ul><li>It learns your personal baseline: heart rate, blood oxygen and temperature against your activity.</li><li>Every new reading is scored against that baseline.</li><li>A serious score must hold for several readings before an alert.</li><li>You get an "Are you OK?" check-in first, then a ready-to-send message with the evidence.</li><li>Nothing is sent automatically. You tap send yourself.</li></ul></div>
+<div class="card ev"><h2>Your daily health</h2><ul><li>Blood oxygen: log a reading and see what it means.</li><li>Sleep mode: start at bedtime, tap awake, hours are logged.</li><li>Hydration: quick add, pace check and reminders.</li></ul></div>
+<div class="card ev"><h2>Honest limits</h2><ul><li>The demo stream and test events are simulated, and the app says so.</li><li>Validation numbers come from a simulator, not patients.</li><li>Data stays in this browser. There is no cloud backup yet.</li><li>Smartwatch and health-platform sync are planned, not built.</li><li>This is not a medical device and does not diagnose.</li></ul></div><button class="p wide" onclick="ovx()">Got it</button>`);
+}
+
+// ---------- Proof: exercise vs emergency, validation, evidence ----------
+const PF = { run: null, val: null, busy: false };
+const med = a => { if (!a.length) return null; a = a.slice().sort((x, y) => x - y); return a[a.length >> 1]; };
+function trial(kind, len, tries) {
+  let o;
+  for (let k = 0; k < tries; k++) {
+    const sim = new Radar.Sim(), eng = new Radar.Engine({ minRows: 225 });
+    for (let i = 0; i < 500; i++) eng.push(sim.step()); eng.ack(); sim.s.ev = null;
+    o = { kind, hr: [], act: [], fire: null, nf: null }; let run = 0;
+    for (let i = 0; i < len; i++) {
+      if (kind && i == 20) sim.inject(kind, kind == 'work' ? 100 : 60);
+      const s = sim.step(), r = eng.push(s, { freeze: !!sim.s.ev });
+      o.hr.push(s.hr); o.act.push(s.act);
+      run = s.hr > 120 ? run + 1 : 0;
+      if (run >= 3 && o.nf == null) o.nf = i;
+      if (r.fire && o.fire == null) o.fire = i;
+    }
+    if (!(tries > 1 && o.fire != null && o.fire < 20)) break;
+  }
+  return o;
+}
+function runProof() {
+  PF.busy = true;
+  PF.run = [['work', 'Hard workout', 'Heart rate climbs because you are running. Normal for you.'], ['emerg', 'Sudden spike while still', 'Heart rate jumps with no movement to explain it.'], ['hyp', 'Low-oxygen episode', 'Heart rate rises only modestly, but oxygen drops.']].map(([k, t, d]) => Object.assign(trial(k, 130, 6), { t, d }));
+  PF.busy = false; if (S.tab == 'browse' && !S.det) draw();
+}
+function pfPanel(o) {
+  const n = o.hr.length, x = i => (i / (n - 1) * 100).toFixed(1), y = h => (48 - (Math.min(180, Math.max(40, h)) - 40) / 140 * 46).toFixed(1);
+  const hr = o.hr.map((h, i) => x(i) + ',' + y(h)).join(' '), ac = '0,50 ' + o.act.map((a, i) => x(i) + ',' + (50 - Math.min(100, a) / 100 * 22).toFixed(1)).join(' ') + ' 100,50';
+  const ok = o.kind != 'work', radar = o.fire != null && o.fire >= 20, nv = o.nf != null && o.nf >= 20;
+  const rv = o.kind == 'work' ? (radar ? tag('False alarm', '--red') : tag('No alert: normal for you', '--green')) : (radar ? tag('Alert in ' + ((o.fire - 20) * 0.4).toFixed(1) + ' s', '--green') : tag('Missed', '--red'));
+  const nvv = o.kind == 'work' ? (nv ? tag('False alarm', '--red') : tag('No alert', '--green')) : (nv ? tag('Alert', '--green') : tag('Missed', '--red'));
+  return `<div class="pf"><b>${o.t}</b><div class="sub">${o.d}</div><svg viewBox="0 0 100 50" preserveAspectRatio="none"><polygon points="${ac}" fill="var(--blue)" opacity=".18"/><line x1="0" x2="100" y1="${y(120)}" y2="${y(120)}" stroke="var(--yel)" stroke-dasharray="3 2" vector-effect="non-scaling-stroke"/><polyline points="${hr}" fill="none" stroke="var(--fg)" stroke-width="1.6" vector-effect="non-scaling-stroke"/>${radar ? `<line x1="${x(o.fire)}" x2="${x(o.fire)}" y1="0" y2="50" stroke="var(--red)" stroke-width="2" vector-effect="non-scaling-stroke"/>` : ''}</svg><div class="sub" style="margin:4px 0">Line: heart rate · shaded: activity · dashed: 120 bpm · red: Radar alert</div><div style="display:flex;justify-content:space-between;gap:6px;flex-wrap:wrap;font-size:13px"><span>Health Radar ${rv}</span><span>Fixed 120 bpm rule ${nvv}</span></div></div>`;
+}
+function proofCard() {
+  if (!PF.run && !PF.busy) setTimeout(runProof, 30);
+  return `<div class="card hero"><h2>Exercise or emergency?</h2><div style="font-size:17px;font-weight:500;line-height:1.3">A high heart rate means different things for different people and moments.</div><div class="sub" style="margin-top:4px">Health Radar learns how your own vitals move with your activity, then asks whether a reading is normal for what you are doing right now. A fixed threshold cannot do that.</div><div class="simbar" style="margin-top:10px">Simulated stream, same learned baseline in all three cases.</div>${PF.run ? PF.run.map(pfPanel).join('') : '<div class="sub" style="padding:14px 0">Running comparison…</div>'}<div class="acts"><button class="p sm o" onclick="runProof()">Run again (new random data)</button></div></div><div class="card"><h2>Live demo script</h2><div class="sub">Do these in order. Watch the Anomaly Radar card below.</div><div class="acts"><button class="p sm" onclick="demoStep(1)">1 Harmless workout</button><button class="p sm r" onclick="demoStep(2)">2 Inject anomaly</button><button class="p sm o" onclick="demoStep(3)">3 Show evidence</button></div><div class="sub" id="dsNote" style="margin-top:6px">Step 1 raises heart rate with activity. Expect no alert.</div></div>`;
+}
+function demoStep(n) {
+  const note = t => { const e = document.getElementById('dsNote'); if (e) e.textContent = t; }, jump = id => { const e = document.getElementById(id); e && e.scrollIntoView({ behavior: 'smooth', block: 'center' }); };
+  if (n == 1) { rInj('work', 100); note('Workout running: heart rate rises but Radar stays calm because activity explains it.'); jump('rdPill'); }
+  if (n == 2) { rInj('emerg', 60); note('Spike injected with no movement. Radar should alert within a few readings.'); jump('rdPill'); }
+  if (n == 3) { note(RD.al ? 'Evidence: findings versus your own baseline are in the message below.' : 'No alert yet. Run step 2 first and wait a moment.'); jump('rdMsg'); }
+}
+function valHTML() {
+  const V = PF.val; if (!V) return '<div class="sub">Runs the detection engine on 80 simulated sessions in your browser. Takes a few seconds.</div>';
+  const m = a => a == null ? '-' : a + ' readings (~' + (a * 0.4).toFixed(1) + ' s at demo speed)', f = (k, n) => `${k}/${n}`;
+  return `<div class="sub">${V.done < V.n ? 'Running ' + V.done + '/' + V.n + '…' : 'Finished ' + V.n + ' runs per scenario'}</div><table class="vt"><tr><td>False alarms in normal days (${(V.n * 1500).toLocaleString()} readings)</td><td><b class="${V.bg ? 'r' : 'g'}">${f(V.bg, V.done)}</b></td></tr><tr><td>Hard workouts flagged: Health Radar<br><span class="sub">Fixed 120 bpm rule</span></td><td><b class="${V.wf ? 'r' : 'g'}">${f(V.wf, V.done)}</b><br><span class="sub">${f(V.wn, V.done)}</span></td></tr><tr><td>Heart spike at rest caught<br><span class="sub">median delay</span></td><td><b class="g">${f(V.ed, V.done)}</b><br><span class="sub">${m(med(V.el))}</span></td></tr><tr><td>Low-oxygen episode caught: Health Radar<br><span class="sub">Fixed 120 bpm rule</span></td><td><b class="g">${f(V.hd, V.done)}</b><br><span class="sub">${f(V.hn, V.done)}</span></td></tr><tr><td>Missed real events (spike + low-oxygen)</td><td><b class="${(V.done * 2 - V.ed - V.hd) ? 'r' : 'g'}">${V.done * 2 - V.ed - V.hd}/${V.done * 2}</b></td></tr></table><div class="sub" style="margin-top:6px">Fixed seed 2026: running it again gives identical numbers.</div><div class="acts"><button class="p sm o" onclick="copyVal()">Copy results</button></div>`;
+}
+function copyVal() { const V = PF.val; if (!V) return; const t = `Health Radar validation (simulated, seed 2026, ${V.done} runs/scenario)\nBackground false alarms: ${V.bg}/${V.done} runs of 1500 readings\nWorkouts flagged: Radar ${V.wf}/${V.done}, fixed 120 bpm rule ${V.wn}/${V.done}\nSpike at rest caught: ${V.ed}/${V.done}, median delay ${med(V.el)} readings\nLow oxygen caught: Radar ${V.hd}/${V.done}, fixed rule ${V.hn}/${V.done}\nMissed events: ${V.done * 2 - V.ed - V.hd}/${V.done * 2}`; try { navigator.clipboard.writeText(t).then(() => toast('Results copied')); } catch (e) { toast('Could not copy'); } }
+function runVal() {
+  if (PF.busy) return; PF.busy = true;
+  const V = PF.val = { n: 20, done: 0, bg: 0, wf: 0, wn: 0, ed: 0, el: [], hd: 0, hn: 0 }, out = () => { const e = document.getElementById('valOut'); if (e) e.innerHTML = valHTML(); };
+  const rnd0 = Math.random, step = () => {
+    let sd = (2026 + V.done * 7919) >>> 0; Math.random = () => { sd = (sd + 0x6D2B79F5) | 0; let t = Math.imul(sd ^ sd >>> 15, 1 | sd); t = (t + Math.imul(t ^ t >>> 7, 61 | t)) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+    let a, w, e, h; try { a = trial('', 1500, 1); w = trial('work', 130, 1); e = trial('emerg', 130, 1); h = trial('hyp', 130, 1); } finally { Math.random = rnd0; }
+    const _unused = 0;
+    //, w = trial('work', 130, 1), e = trial('emerg', 130, 1), h = trial('hyp', 130, 1);
+    if (a.fire != null) V.bg++; if (w.fire != null) V.wf++; if (w.nf != null) V.wn++;
+    if (e.fire != null && e.fire >= 20) { V.ed++; V.el.push(e.fire - 20); } if (h.fire != null && h.fire >= 20) V.hd++; if (h.nf != null && h.nf >= 20) V.hn++;
+    V.done++; out(); if (V.done < V.n) setTimeout(step, 5); else PF.busy = false;
+  }; out(); setTimeout(step, 20);
+}
+function evidenceCard() {
+  const al = (U && U.alerts) || [], fa = al.filter(a => /false alarm/.test(a.v)).length;
+  return `<div class="card ev"><h2>What is real, simulated and planned</h2>
+<b class="g">Works today (on this phone/browser)</b><ul><li>Anomaly engine running on-device: personal baseline, activity-aware, no server</li><li>Phone motion step counting and camera fingertip heart rate (approximate)</li><li>Bluetooth heart-rate band, oximeter, thermometer, scale (Chrome on Android only)</li><li>Continuous monitoring while the app is open: keeps the screen awake, reconnects a lost band, logs SpO₂ every 5 min and overnight heart rate in sleep mode</li></ul>
+<b class="y">Simulated</b><ul><li>The demo stream and the three test events (labelled on screen and inside every message)</li><li>The numbers in the validation table below</li></ul>
+<b class="r">Planned, not built</b><ul><li>Smartwatch, Health Connect, Apple Health, Google Fit</li><li>Cloud backup: data lives only in this browser, use Export in Profile</li><li>Clinical validation with real patient data</li></ul></div>
+<div class="card ev"><h2>How each signal gets in</h2>
+<b class="g">Blood oxygen (SpO₂)</b><ul><li>Needs a compatible smartwatch, fitness device or pulse oximeter. Readings come in over Bluetooth now, and through a health platform or device API once those are built.</li><li>A normal phone camera or browser is not a dependable continuous SpO₂ monitor, so the app does not pretend it is.</li></ul>
+<b class="y">Sleep</b><ul><li>Today: sleep mode (tap start and awake) or manual hours.</li><li>Planned: import sleep sessions from Health Connect on Android and Apple Health / HealthKit on iPhone. Automatic detection needs a compatible device or an app that records sleep.</li></ul>
+<b class="y">Hydration</b><ul><li>The hardest to track automatically. Without logging or a connected smart bottle, nothing can know how much you drank.</li><li>The app automates reminders and daily totals from your own entries. Logged intake is not a measurement of body hydration.</li></ul></div>
+<div class="card ev"><h2>Sensor check on this device</h2><ul>${[['Motion sensor', 'DeviceMotionEvent' in window], ['Camera (finger heart rate)', !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)], ['Bluetooth (heart-rate band, oximeter)', !!navigator.bluetooth], ['Notifications', 'Notification' in window]].map(([n, v]) => `<li>${n}: <b class="${v ? 'g' : 'r'}">${v ? 'available' : 'not available'}</b></li>`).join('')}</ul><div class="sub">Missing data is handled honestly: with only a heart-rate source, the engine scores heart rate alone and never invents oxygen or temperature values. If heart rate drops out, it reports no data instead of guessing.</div></div>
+<div class="card ev"><h2>How alerts are checked</h2><ul><li>An anomaly score is not a diagnosis. It means "unusual for you, right now".</li><li>Readings are compared with your own baseline at your current activity level, so exercise is expected, not flagged.</li><li>An alert needs several consecutive abnormal readings, and is held back while activity changes fast.</li><li>Then a check-in: "Are you OK?" for 30 s before you are asked to escalate.</li><li>"I'm OK" marks a false alarm and, with live data, teaches the baseline that this reading is normal for you.</li><li>Nothing is sent automatically. You tap send in your own WhatsApp, SMS or email.</li></ul>
+<div class="sub">Your alert log: ${al.length} alerts, ${fa} marked false alarm</div></div>
+<div class="card ev"><h2>Validation on simulated data</h2><div class="sub">Tests the detection logic against a simulator we wrote. It shows the logic works as designed, not clinical accuracy.</div><div id="valOut">${valHTML()}</div><div class="acts"><button class="p sm" onclick="runVal()">Run validation</button></div></div>`;
+}
+
+// ---------- housekeeping ----------
+setInterval(() => {
+  if (!U || S.stage != 'app') return; if (TR.dirty) { save(); TR.dirty = false; }
+  const sig = (today().steps || 0) + '|' + Math.round(live('hr', 15000) || 0);
+  if (S.tab == 'home' && !S.det && !$('#ov') && TR.sig != sig) { TR.sig = sig; draw(); }
+}, 3000);
+addEventListener('pagehide', () => { if (U && TR.dirty) save(); });
+if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => { }));
+load();
+const cur = DB.cur && DB.accounts.find(a => a.e == DB.cur);
+if (cur) enter(cur); else draw();
+
+</script>
+
+</body></html>
